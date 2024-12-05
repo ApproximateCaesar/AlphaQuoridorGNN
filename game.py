@@ -11,6 +11,8 @@ from collections import deque
 import copy
 from copy import deepcopy
 
+import diagnostics
+
 # Game state
 class State:
     def __init__(self, board_size=3, num_walls=1, player=None, enemy=None, walls=None, depth=0):
@@ -89,7 +91,7 @@ class State:
             return tables
         
         return [pieces_of(self.player), pieces_of(self.enemy), walls_of(self.walls)]
-    
+
     def legal_actions(self):
         """
         0 - (N ** 2 - 1): Move to a position

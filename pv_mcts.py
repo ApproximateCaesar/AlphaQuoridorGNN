@@ -12,6 +12,8 @@ import numpy as np
 from copy import deepcopy
 import random
 
+import diagnostics
+
 # Prepare parameters
 PV_EVALUATE_COUNT = 50 # Number of simulations per inference (original is 1600)
 

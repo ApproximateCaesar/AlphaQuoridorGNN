@@ -12,7 +12,7 @@ from evaluate_network import evaluate_network
 from evaluate_best_player import evaluate_best_player
 
 # Number of NUM_EPOCH
-NUM_TRAIN_CYCLE = 3
+NUM_TRAIN_CYCLE = 2
 
 # Main function
 if __name__ == '__main__':
@@ -20,20 +20,23 @@ if __name__ == '__main__':
     dual_network()
 
     for i in range(NUM_TRAIN_CYCLE):
-        print(f'\nBegin training cycle {i+1}/{NUM_TRAIN_CYCLE} ====================')
+        print(f'\nBEGIN TRAINING CYCLE {i+1}/{NUM_TRAIN_CYCLE} ====================')
         # self-play part
         print('\nBegin self-play ====================')
         self_play()
+        print('Self play', i, 'complete')
 
         # parameter update part
         print('\nUpdate network parameters ====================')
         train_network()
+        print('\nParameter update', i, 'complete\n')
 
         # Evaluating new parameters
         print('\nEvaluate new parameters ====================')
         update_best_player = evaluate_network()
+        print('Evaluating new parameters', i, 'complete\n')
 
         # Evaluating the best player
         print('\nEvaluate best model against baseline algorithms ====================')
-        if update_best_player:
-            evaluate_best_player()
+        # if update_best_player:
+        #     evaluate_best_player()

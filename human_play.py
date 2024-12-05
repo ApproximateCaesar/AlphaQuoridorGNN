@@ -1,6 +1,6 @@
 # TODO: fix bug where game freezes when invalid wall placement is attempted.
-#  Could also be just attempting to place a wall when you have none.
-# TODO: be able to choose which player you are.
+#       Could also be just attempting to place a wall when you have none.
+# TODO: be able to choose which colour you start as (black or white).
 
 
 # Importing necessary packages and modules

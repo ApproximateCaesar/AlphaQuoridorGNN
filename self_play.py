@@ -15,6 +15,8 @@ import pickle
 import os
 from copy import deepcopy
 
+import diagnostics
+
 # Preparing parameters
 SP_GAME_COUNT = 1  # Number of games for self-play (25000 in the original version)
 SP_TEMPERATURE = 1.0  # Temperature parameter for Boltzmann distribution
@@ -34,6 +36,7 @@ def write_data(history):
         now.year, now.month, now.day, now.hour, now.minute, now.second)
     with open(path, mode='wb') as f:
         pickle.dump(history, f)
+
 
 # Executing one game
 def play(model):
@@ -98,4 +101,3 @@ def self_play():
 # Running the function
 if __name__ == '__main__':
     self_play()
-
