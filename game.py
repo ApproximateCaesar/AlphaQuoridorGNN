@@ -21,7 +21,7 @@ class State:
         self.enemy = enemy if enemy != None else [0] * 2
         self.walls = walls if walls != None else [0] * ((N - 1) ** 2)
         self.depth = depth
-        self.draw_depth = 30
+        self.draw_depth = 30 # number of moves after which the game is assumed to be a draw
 
         if player == None or enemy == None:
             init_pos = N * (N - 1) + N // 2

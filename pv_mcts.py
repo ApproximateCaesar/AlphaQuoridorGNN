@@ -23,7 +23,7 @@ def predict(model, state):
     x = x.reshape(c, a, b).transpose(1, 2, 0).reshape(1, a, b, c)
 
     # Inference
-    y = model.predict(x, batch_size=1)
+    y = model.predict(x, batch_size=1, verbose=False)
 
     # Get policy
     policies = y[0][0][list(state.legal_actions())] # Only legal moves

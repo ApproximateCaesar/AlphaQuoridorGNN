@@ -18,14 +18,17 @@ if __name__ == '__main__':
     dual_network()
 
     for i in range(NUM_TRAIN_CYCLE):
-        print('Train', i, '====================')
+        print(f'\nBegin training cycle {i+1}/{NUM_TRAIN_CYCLE} ====================')
         # self-play part
+        print('\nBegin self-play ====================')
         self_play()
 
         # parameter update part
+        print('\nUpdate network parameters ====================')
         train_network()
 
         # Evaluating new parameters
+        print('\nEvaluate new parameters ====================')
         update_best_player = evaluate_network()
 
         # Evaluating the best player

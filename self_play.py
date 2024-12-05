@@ -16,7 +16,7 @@ import os
 from copy import deepcopy
 
 # Preparing parameters
-SP_GAME_COUNT = 50  # Number of games for self-play (25000 in the original version)
+SP_GAME_COUNT = 1  # Number of games for self-play (25000 in the original version)
 SP_TEMPERATURE = 1.0  # Temperature parameter for Boltzmann distribution
 
 # Value of the first player
@@ -85,7 +85,7 @@ def self_play():
         history.extend(h)
 
         # Output
-        print('\rSelfPlay {}/{}'.format(i+1, SP_GAME_COUNT), end='')
+        print('\rSelf-play (game {}/{})'.format(i+1, SP_GAME_COUNT), end='')
     print('')
 
     # Saving the training data

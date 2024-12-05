@@ -47,7 +47,7 @@ def train_network():
 
     # Output
     print_callback = LambdaCallback(
-        on_epoch_begin=lambda epoch, logs: print('\rTrain {}/{}'.format(epoch + 1, NUM_EPOCH), end='')
+        on_epoch_begin=lambda epoch, logs: print('\rTraining model (epoch {}/{})'.format(epoch + 1, NUM_EPOCH), end='')
     )
 
     # Executing training

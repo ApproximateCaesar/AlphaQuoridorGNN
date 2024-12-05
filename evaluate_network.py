@@ -46,7 +46,7 @@ def play(next_actions):
 # Replace the best player
 def update_best_player():
     copy('./model/latest.keras', './model/best.keras')
-    print('Change BestPlayer')
+    print('Latest model is best. Replacing best model with latest.')
 
 # Network evaluation
 def evaluate_network():
@@ -71,12 +71,12 @@ def evaluate_network():
             total_point += 1 - play(list(reversed(next_actions)))
 
         # Output
-        print('\rEvaluate {}/{}'.format(i + 1, EN_GAME_COUNT), end='')
+        print('\rEvaluating latest model (game {}/{})'.format(i + 1, EN_GAME_COUNT), end='')
     print('')
 
     # Calculate average points
     average_point = total_point / EN_GAME_COUNT
-    print('AveragePoint', average_point)
+    print('Average points of latest model:', average_point)
 
     # Clear models
     K.clear_session()
