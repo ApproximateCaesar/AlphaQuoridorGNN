@@ -1,3 +1,5 @@
 env/
 # For PyCharm users
 .idea/
+/model/
+/data/
