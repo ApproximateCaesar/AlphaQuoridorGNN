@@ -1,3 +1,5 @@
+# TODO: figure out who goes first. The AI should go first 50 percent of the time.
+
 # ====================
 # Quoridor (3 x 3), wall = 1
 # ====================
@@ -457,6 +459,7 @@ def alpha_beta(state, alpha, beta):
     # Return the maximum value of the state values for legal actions
     return alpha
 
+# TODO: Looks like alpha-beta algorithm doesn't limit its search depth. If not implement this with eval function.
 # Select an action using alpha-beta pruning
 def alpha_beta_action(state):
     # Calculate state values for legal actions

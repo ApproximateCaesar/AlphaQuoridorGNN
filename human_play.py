@@ -1,3 +1,8 @@
+# TODO: fix bug where game freezes when invalid wall placement is attempted.
+#  Could also be just attempting to place a wall when you have none.
+# TODO: be able to choose which player you are.
+
+
 # Importing necessary packages and modules
 from game import State
 from pv_mcts import pv_mcts_action, random_action

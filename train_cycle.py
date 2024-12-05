@@ -1,3 +1,5 @@
+# TODO: Performance increases.
+
 # ====================
 # Execution of Learning Cycle
 # ====================
@@ -32,5 +34,6 @@ if __name__ == '__main__':
         update_best_player = evaluate_network()
 
         # Evaluating the best player
+        print('\nEvaluate best model against baseline algorithms ====================')
         if update_best_player:
             evaluate_best_player()
