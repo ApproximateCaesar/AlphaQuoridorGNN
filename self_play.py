@@ -17,6 +17,9 @@ from copy import deepcopy
 
 import diagnostics
 
+from cProfile import Profile
+from pstats import Stats
+
 # Preparing parameters
 SP_GAME_COUNT = 1  # Number of games for self-play (25000 in the original version)
 SP_TEMPERATURE = 1.0  # Temperature parameter for Boltzmann distribution
@@ -38,6 +41,8 @@ def write_data(history):
         pickle.dump(history, f)
 
 
+# TODO: Increase performance of play(). Currently takes around 20s per call for 3x3 board.
+
 # Executing one game
 def play(model):
     # Training data
@@ -46,10 +51,7 @@ def play(model):
     # Generating the state
     state = State()
 
-    while True:
-        # When the game ends
-        if state.is_done():
-            break
+    while not state.is_done(): # while the game hasn't ended
 
         # Getting the probability distribution of legal moves
         scores = pv_mcts_scores(model, deepcopy(state), SP_TEMPERATURE)

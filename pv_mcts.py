@@ -14,6 +14,7 @@ import random
 
 import diagnostics
 
+
 # Prepare parameters
 PV_EVALUATE_COUNT = 50 # Number of simulations per inference (original is 1600)
 
@@ -44,6 +45,7 @@ def nodes_to_scores(nodes):
 
 # Get Monte Carlo Tree Search scores
 def pv_mcts_scores(model, state, temperature):
+
     # Define Monte Carlo Tree Search node
     class Node:
         # Initialize node
@@ -123,6 +125,7 @@ def pv_mcts_scores(model, state, temperature):
 
 # Action selection with Monte Carlo Tree Search
 def pv_mcts_action(model, temperature=0):
+    """Returns a function of the game state that selects an action based on PV-MCTS."""
     def pv_mcts_action(state):
         scores = pv_mcts_scores(model, deepcopy(state), temperature)
 
@@ -135,6 +138,7 @@ def boltzman(xs, temperature):
     return [x / sum(xs) for x in xs]
 
 def random_action():
+    """Returns a function of the game state that selects a uniformly random action."""
     def random_action(state):
         legal_actions = state.legal_actions()
         action = random.randint(0, len(legal_actions) - 1)

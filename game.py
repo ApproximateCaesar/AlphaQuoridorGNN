@@ -1,4 +1,6 @@
 # TODO: figure out who goes first. The AI should go first 50 percent of the time.
+#   Pretty sure it doesn't matter because the AI plays itself - it always goes both first and second.
+# TODO: Make board_size a constant defined outside of classes/functions so we can easily change it
 
 # ====================
 # Quoridor (3 x 3), wall = 1
@@ -21,13 +23,13 @@ class State:
         if N % 2 == 0:
             raise ValueError('The board size must be an odd number.')
         self.directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        self.player = player if player != None else [0] * 2 # Position, number of walls
-        self.enemy = enemy if enemy != None else [0] * 2
-        self.walls = walls if walls != None else [0] * ((N - 1) ** 2)
-        self.depth = depth
+        self.player = player if player is not None else [0] * 2 # Position, number of walls
+        self.enemy = enemy if enemy is not None else [0] * 2
+        self.walls = walls if walls is not None else [0] * ((N - 1) ** 2)
+        self.depth = depth # number of plies (moves by either player) played
         self.draw_depth = 30 # number of moves after which the game is assumed to be a draw
 
-        if player == None or enemy == None:
+        if player is None or enemy is None:
             init_pos = N * (N - 1) + N // 2
             self.player[0] = init_pos
             self.player[1] = num_walls
@@ -94,9 +96,10 @@ class State:
 
     def legal_actions(self):
         """
-        0 - (N ** 2 - 1): Move to a position
-        N ** 2- (N ** 2 + (N - 1) ** 2 - 1): Place a horizontal wall
-        (N ** 2 + (N - 1) ** 2) - (N ** 2 + 2 * (N - 1) ** 2 - 1): Place a vertical wall
+        Each possible action is represented by an integer in the range 0 to (N ** 2 + 2 * (N - 1) ** 2 - 1).
+        Actions 0 to (N ** 2 - 1): Move to a position
+        Actions (N ** 2) to (N ** 2 + (N - 1) ** 2 - 1): Place a horizontal wall
+        Actions (N ** 2 + (N - 1) ** 2) to (N ** 2 + 2 * (N - 1) ** 2 - 1): Place a vertical wall
         """
         actions = []
         actions.extend(self.legal_actions_pos(self.player[0]))
