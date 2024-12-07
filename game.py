@@ -1,9 +1,8 @@
-# TODO: figure out who goes first. The AI should go first 50 percent of the time.
-#   Pretty sure it doesn't matter because the AI plays itself - it always goes both first and second.
-# TODO: Make board_size a constant defined outside of classes/functions so we can easily change it
+# TODO: figure out how the game state and actions are represented.
+# TODO: Create a constant for draw_depth so it can be changed to be appropriate to the board size.
 
 # ====================
-# Quoridor (3 x 3), wall = 1
+# Quoridor game logic
 # ====================
 
 # Importing packages
@@ -12,31 +11,32 @@ import math
 from collections import deque
 import copy
 from copy import deepcopy
-
+from constants import BOARD_SIZE, NUM_WALLS
 import diagnostics
+
 
 # Game state
 class State:
-    def __init__(self, board_size=3, num_walls=1, player=None, enemy=None, walls=None, depth=0):
+    def __init__(self, board_size=BOARD_SIZE, num_walls=NUM_WALLS, player=None, enemy=None, walls=None, depth=0):
         self.N = board_size
         N = self.N
         if N % 2 == 0:
             raise ValueError('The board size must be an odd number.')
         self.directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        self.player = player if player is not None else [0] * 2 # Position, number of walls
+        self.player = player if player is not None else [0] * 2  # Position, number of walls
         self.enemy = enemy if enemy is not None else [0] * 2
         self.walls = walls if walls is not None else [0] * ((N - 1) ** 2)
-        self.depth = depth # number of plies (moves by either player) played
-        self.draw_depth = 30 # number of moves after which the game is assumed to be a draw
+        self.depth = depth  # number of plies (moves by either player) played
+        self.draw_depth = 30  # number of moves after which the game is assumed to be a draw
 
         if player is None or enemy is None:
             init_pos = N * (N - 1) + N // 2
             self.player[0] = init_pos
             self.player[1] = num_walls
-            self.enemy[0] = init_pos 
+            self.enemy[0] = init_pos
             self.enemy[1] = num_walls
 
-     # Check if it's a loss
+    # Check if it's a loss
     def is_lose(self):
         if self.enemy[0] // self.N == 0:
             return True
@@ -45,25 +45,26 @@ class State:
     # Check if it's a draw
     def is_draw(self):
         return self.depth >= self.draw_depth
-    
+
     # Check if the game is over
     def is_done(self):
         return self.is_lose() or self.is_draw()
-    
+
     def pieces_array(self):
         N = self.N
+
         def pieces_of(pieces):
             tables = []
 
             table = [0] * (N ** 2)
             table[pieces[0]] = 1
             tables.append(table)
-                
+
             table = [pieces[1]] * (N ** 2)
             tables.append(table)
 
             return tables
-        
+
         def walls_of(walls):
             tables = []
 
@@ -86,12 +87,12 @@ class State:
                     table_h[pos] = 1
                 elif walls[wp] == 2:
                     table_v[pos] = 1
-                
+
             tables.append(table_h)
             tables.append(table_v)
 
             return tables
-        
+
         return [pieces_of(self.player), pieces_of(self.enemy), walls_of(self.walls)]
 
     def legal_actions(self):
@@ -107,7 +108,7 @@ class State:
         if self.player[1] > 0:
             for pos in range((self.N - 1) ** 2):
                 actions.extend(self.legal_actions_wall(pos))
-                
+
         return actions
 
     def legal_actions_pos(self, pos):
@@ -133,7 +134,8 @@ class State:
                                 if nx > 0 and walls[wp - (N - 1)] != 1:
                                     nnp = np - N
                                     actions.append(nnp)
-                                elif (nx == 0 and walls[wp] != 2) or (nx > 0 and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
+                                elif (nx == 0 and walls[wp] != 2) or (
+                                        nx > 0 and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
                                     nnp = np + 1
                                     actions.append(nnp)
                     elif y == (N - 1):
@@ -142,9 +144,10 @@ class State:
                                 actions.append(np)
                             else:
                                 if nx > 0 and walls[wp - (N - 1) - 1] != 1:
-                                    nnp = np -  N
+                                    nnp = np - N
                                     actions.append(nnp)
-                                elif (nx == 0 and walls[wp - 1] != 2) or (nx > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2):
+                                elif (nx == 0 and walls[wp - 1] != 2) or (
+                                        nx > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2):
                                     nnp = np - 1
                                     actions.append(nnp)
                     else:
@@ -156,10 +159,12 @@ class State:
                                     nnp = np - N
                                     actions.append(nnp)
                                 else:
-                                    if (nx == 0 and walls[wp - 1] != 2) or (nx > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2):
+                                    if (nx == 0 and walls[wp - 1] != 2) or (
+                                            nx > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2):
                                         nnp = np - 1
                                         actions.append(nnp)
-                                    if (nx == 0 and walls[wp] != 2) or (nx > 0 and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
+                                    if (nx == 0 and walls[wp] != 2) or (
+                                            nx > 0 and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
                                         nnp = np + 1
                                         actions.append(nnp)
                 if nx > x:
@@ -171,7 +176,8 @@ class State:
                                 if nx < (N - 1) and walls[wp] != 1:
                                     nnp = np + N
                                     actions.append(nnp)
-                                elif (nx == (N - 1) and walls[wp - (N - 1)] != 2) or (nx < (N - 1) and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
+                                elif (nx == (N - 1) and walls[wp - (N - 1)] != 2) or (
+                                        nx < (N - 1) and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
                                     nnp = np + 1
                                     actions.append(nnp)
                     elif y == (N - 1):
@@ -182,7 +188,8 @@ class State:
                                 if nx < (N - 1) and walls[wp - 1] != 1:
                                     nnp = np + N
                                     actions.append(nnp)
-                                elif (nx == (N - 1) and walls[wp - (N - 1) - 1] != 2) or (nx < (N - 1) and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2):
+                                elif (nx == (N - 1) and walls[wp - (N - 1) - 1] != 2) or (
+                                        nx < (N - 1) and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2):
                                     nnp = np - 1
                                     actions.append(nnp)
                     else:
@@ -194,10 +201,12 @@ class State:
                                     nnp = np + N
                                     actions.append(nnp)
                                 else:
-                                    if (nx == (N - 1) and walls[wp - (N - 1) - 1] != 2) or (nx < (N - 1) and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2):
+                                    if (nx == (N - 1) and walls[wp - (N - 1) - 1] != 2) or (
+                                            nx < (N - 1) and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2):
                                         nnp = np - 1
                                         actions.append(nnp)
-                                    if (nx == (N - 1) and walls[wp - (N - 1)] != 2) or (nx < (N - 1) and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
+                                    if (nx == (N - 1) and walls[wp - (N - 1)] != 2) or (
+                                            nx < (N - 1) and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
                                         nnp = np + 1
                                         actions.append(nnp)
                 if ny < y:
@@ -220,7 +229,8 @@ class State:
                                 if ny > 0 and walls[wp - (N - 1) - 1] != 2:
                                     nnp = np - 1
                                     actions.append(nnp)
-                                elif (ny == 0 and walls[wp - (N - 1)] != 1) or (ny > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - (N - 1)] != 1):
+                                elif (ny == 0 and walls[wp - (N - 1)] != 1) or (
+                                        ny > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - (N - 1)] != 1):
                                     nnp = np - N
                                     actions.append(nnp)
                     else:
@@ -232,10 +242,12 @@ class State:
                                     nnp = np - 1
                                     actions.append(nnp)
                                 else:
-                                    if (ny == 0 and walls[wp - (N - 1)] != 1) or (ny > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - (N - 1)] != 1):
+                                    if (ny == 0 and walls[wp - (N - 1)] != 1) or (
+                                            ny > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - (N - 1)] != 1):
                                         nnp = np - N
                                         actions.append(nnp)
-                                    if (ny == 0 and walls[wp] != 1) or (ny > 0 and (walls[wp - 1] != 1 or walls[wp] != 1)):
+                                    if (ny == 0 and walls[wp] != 1) or (
+                                            ny > 0 and (walls[wp - 1] != 1 or walls[wp] != 1)):
                                         nnp = np + N
                                         actions.append(nnp)
                 if ny > y:
@@ -247,7 +259,8 @@ class State:
                                 if ny < (N - 1) and walls[wp] != 2:
                                     nnp = np + 1
                                     actions.append(nnp)
-                                elif (ny == (N - 1) and walls[wp - 1] != 1) or (ny < (N - 1) and walls[wp - 1] != 1 and walls[wp] != 1):
+                                elif (ny == (N - 1) and walls[wp - 1] != 1) or (
+                                        ny < (N - 1) and walls[wp - 1] != 1 and walls[wp] != 1):
                                     nnp = np + N
                                     actions.append(nnp)
                     elif x == (N - 1):
@@ -258,7 +271,8 @@ class State:
                                 if ny < (N - 1) and walls[wp - (N - 1)] != 2:
                                     nnp = np + 1
                                     actions.append(nnp)
-                                elif (ny == (N - 1) and walls[wp - (N - 1) - 1] != 1) or (ny < (N - 1) and walls[wp - (N - 1) - 1] != 1 and walls[wp - (N - 1)] != 1):
+                                elif (ny == (N - 1) and walls[wp - (N - 1) - 1] != 1) or (
+                                        ny < (N - 1) and walls[wp - (N - 1) - 1] != 1 and walls[wp - (N - 1)] != 1):
                                     nnp = np - N
                                     actions.append(nnp)
                     else:
@@ -270,18 +284,22 @@ class State:
                                     nnp = np + 1
                                     actions.append(nnp)
                                 else:
-                                    if (ny == (N - 1) and walls[wp - (N - 1) - 1] != 1) or (ny < (N - 1) and walls[wp - (N - 1) - 1] != 1 and walls[wp - (N - 1)] != 1):
+                                    if (ny == (N - 1) and walls[wp - (N - 1) - 1] != 1) or (
+                                            ny < (N - 1) and walls[wp - (N - 1) - 1] != 1 and walls[wp - (N - 1)] != 1):
                                         nnp = np - N
                                         actions.append(nnp)
-                                    if (ny == (N - 1) and walls[wp - 1] != 1) or (ny < (N - 1) and (walls[wp - 1] != 1 or walls[wp] != 1)):
+                                    if (ny == (N - 1) and walls[wp - 1] != 1) or (
+                                            ny < (N - 1) and (walls[wp - 1] != 1 or walls[wp] != 1)):
                                         nnp = np + N
                                         actions.append(nnp)
 
         return actions
 
+    # TODO: fix the illegal wall placement bug
     def legal_actions_wall(self, pos):
         N = self.N
         walls = self.walls
+
         def can_place_wall(orientation, pos):
             if walls[pos] != 0:
                 return False
@@ -326,7 +344,8 @@ class State:
 
             self.walls[pos] = orientation
 
-            player_state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(), walls=deepcopy(self.walls), depth=self.depth)
+            player_state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(),
+                                 walls=deepcopy(self.walls), depth=self.depth)
 
             can_reach_player = bfs(player_state)
 
@@ -343,7 +362,7 @@ class State:
             self.walls[pos] = 0
 
             return can_reach_player and can_reach_enemy
-    
+
         actions = []
 
         if can_place_wall(1, pos) and can_reach_goal(1, pos):
@@ -352,18 +371,19 @@ class State:
             actions.append(N ** 2 + (N - 1) ** 2 + pos)
 
         return actions
-    
+
     def rotate_walls(self):
         N = self.N
         rotated_walls = [0] * len(self.walls)
         for i in range((N - 1) ** 2):
             rotated_walls[i] = self.walls[(N - 1) ** 2 - 1 - i]
         self.walls = rotated_walls
-    
+
     def next(self, action):
         N = self.N
         # Create the next state
-        state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(), walls=deepcopy(self.walls), depth=self.depth + 1)
+        state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(), walls=deepcopy(self.walls),
+                      depth=self.depth + 1)
 
         if action < N ** 2:
             # Move piece
@@ -385,22 +405,29 @@ class State:
         state.player, state.enemy = state.enemy, state.player
 
         return state
-    
+
     # Check if it's the first player's turn
     def is_first_player(self):
         return self.depth % 2 == 0
 
+    # TODO: maybe rewrite this in terms of first and second player to be less confusing
     def __str__(self):
-        """Display the game state as a string."""
+        """
+        Create a string representation of the game state.
+        The board is shown from the perspective of the first player (the second player is considered the enemy).
+        """
         N = self.N
         is_first_player = self.is_first_player()
 
-        board = [['o'] * (2 * N - 1) for _ in range(2 * N - 1)]
+        # Create empty board
+        board = [['o'] * (2 * N - 1) for _ in range(2 * N - 1)]  # 'o' denotes a square on which a pawn can be placed
         for i in range(2 * N - 1):
             for j in range(2 * N - 1):
-                if i % 2 == 1 and j % 2 == 1:
-                    board[i][j] = 'x'
+                if i % 2 == 1 or j % 2 == 1:
+                    board[i][j] = 'x'  # 'x' denotes grooves inbetween squares in which walls can be placed
 
+
+        # mark player and enemy positions
         p_pos = self.player[0] if is_first_player else self.enemy[0]
         e_pos = self.enemy[0] if is_first_player else self.player[0]
 
@@ -409,30 +436,40 @@ class State:
         p_x, p_y = p_pos // N, p_pos % N
         e_x, e_y = e_pos // N, e_pos % N
 
-        board[2 * p_x][2 * p_y] = 'P'
-        board[2 * e_x][2 * e_y] = 'E'
-        
-        turn_info = "<Enemy's Turn>" if is_first_player else "<Player's Turn>"
+        board[2 * p_x][2 * p_y] = 'P'  # player position
+        board[2 * e_x][2 * e_y] = 'E'  # enemy position
 
-        if not is_first_player:
+        turn_info = "<Player's Turn>" if is_first_player else "<Enemy's Turn>"
+
+        # mark wall positions
+        if not is_first_player:  # rotate to correct player's perspective
             self.rotate_walls()
 
-        # Set walls
         for i in range(N - 1):
             for j in range(N - 1):
                 pos = i * (N - 1) + j
-                if self.walls[pos] == 1:
+                if self.walls[pos] == 1:  # horizontal wall
                     board[2 * i + 1][2 * j] = '-'
                     board[2 * i + 1][2 * (j + 1)] = '-'
-                if self.walls[pos] == 2:
+                if self.walls[pos] == 2:  # vertical wall
                     board[2 * i][2 * j + 1] = '|'
                     board[2 * (i + 1)][2 * j + 1] = '|'
 
-        if not is_first_player:
+        if not is_first_player:  # rotate back so as not to affect state
             self.rotate_walls()
 
+        # display who won
+        win_info = ''
+        if self.is_done():
+            if self.is_draw():
+                win_info = '\n\nDraw'
+            elif is_first_player:
+                win_info = '\n\nPlayer has lost'
+            else:
+                win_info = '\n\nPlayer has won'
+
         board_str = '\n'.join([''.join(row) for row in board])
-        return turn_info + '\n' + board_str
+        return turn_info + '\n' + board_str + win_info
 
 
 # Randomly select an action
@@ -440,6 +477,7 @@ def random_action(state):
     legal_actions = state.legal_actions()
     action = random.randint(0, len(legal_actions) - 1)
     return legal_actions[action]
+
 
 # Calculate state value using alpha-beta pruning
 def alpha_beta(state, alpha, beta):
@@ -464,7 +502,8 @@ def alpha_beta(state, alpha, beta):
     # Return the maximum value of the state values for legal actions
     return alpha
 
-# TODO: Looks like alpha-beta algorithm doesn't limit its search depth. If not implement this with eval function.
+
+# TODO: Looks like alpha-beta algorithm doesn't limit its search depth. If not, implement this with eval function.
 # Select an action using alpha-beta pruning
 def alpha_beta_action(state):
     # Calculate state values for legal actions
@@ -479,6 +518,7 @@ def alpha_beta_action(state):
     # Return the action with the maximum state value
     return best_action
 
+
 # Playout
 def playout(state):
     # Loss is -1
@@ -492,9 +532,11 @@ def playout(state):
     # Next state value
     return -playout(state.next(random_action(state)))
 
+
 # Return the index of the maximum value
 def argmax(collection):
     return collection.index(max(collection))
+
 
 # Select an action using Monte Carlo Tree Search
 def mcts_action(state):
@@ -563,7 +605,7 @@ def mcts_action(state):
                 t += c.n
             ucb1_values = []
             for child_node in self.child_nodes:
-                ucb1_values.append(-child_node.w/child_node.n + 2*(2*math.log(t)/child_node.n)**0.5)
+                ucb1_values.append(-child_node.w / child_node.n + 2 * (2 * math.log(t) / child_node.n) ** 0.5)
 
             # Return the child node with the maximum UCB1
             return self.child_nodes[argmax(ucb1_values)]
@@ -583,20 +625,21 @@ def mcts_action(state):
         n_list.append(c.n)
     return legal_actions[argmax(n_list)]
 
+
 # Running the function
 if __name__ == '__main__':
     # Generate the state
     state = State()
+    # Display as a string
+    print(state)
+    print()
 
     # Loop until the game ends
-    while True:
-        # When the game ends
-        if state.is_done():
-            break
+    while not state.is_done():
 
         # Get the next state
         state = state.next(random_action(state))
-
         # Display as a string
         print(state)
         print()
+

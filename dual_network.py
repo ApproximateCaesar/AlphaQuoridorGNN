@@ -10,10 +10,11 @@ from tensorflow.keras import backend as K
 import os
 
 # Preparing parameters
+from constants import BOARD_SIZE
 DN_FILTERS  = 128  # Number of kernels in the convolutional layer (256 in the original version)
 DN_RESIDUAL_NUM =  16  # Number of residual blocks (19 in the original version)
-DN_INPUT_SHAPE = (3, 3, 6)  # Input shape
-DN_OUTPUT_SIZE = 9 + 4 * 2  # Number of actions (placement locations (3*3)) 
+DN_INPUT_SHAPE = (BOARD_SIZE, BOARD_SIZE, 6)  # Input shape
+DN_POLICY_OUTPUT_SIZE = BOARD_SIZE**2 + 2*(BOARD_SIZE-1)**2  # Number of possible actions = N^2 player positions + 2*(N-1)^2 wall placements
 
 # Creating the convolutional layer
 def conv(filters):
@@ -56,7 +57,7 @@ def dual_network():
     x = GlobalAveragePooling2D()(x)
 
     # Policy output
-    p = Dense(DN_OUTPUT_SIZE, kernel_regularizer=l2(0.0005),
+    p = Dense(DN_POLICY_OUTPUT_SIZE, kernel_regularizer=l2(0.0005),
               activation='softmax', name='pi')(x)
 
     # Value output

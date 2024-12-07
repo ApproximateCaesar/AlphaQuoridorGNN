@@ -1,4 +1,7 @@
 # TODO: Performance increases.
+# TODO: Make sure all the modules work with a general board size and number of walls.
+#    Currently only tested size 3 with 1 wall.
+from tensorflow.python.ops.logging_ops import Print
 
 # ====================
 # Execution of Learning Cycle
@@ -10,13 +13,15 @@ from self_play import self_play
 from train_network import train_network
 from evaluate_network import evaluate_network
 from evaluate_best_player import evaluate_best_player
-
+from constants import BOARD_SIZE
 
 # Number of NUM_EPOCH
 NUM_TRAIN_CYCLE = 2
 
 # Main function
 if __name__ == '__main__':
+    print(f'Board size {BOARD_SIZE}')
+
     # Creating the dual network
     dual_network()
 

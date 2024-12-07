@@ -5,7 +5,7 @@
 # Importing packages
 from game import State
 from pv_mcts import pv_mcts_scores
-from dual_network import DN_OUTPUT_SIZE
+from dual_network import DN_POLICY_OUTPUT_SIZE
 from datetime import datetime
 from tensorflow.keras.models import load_model
 from tensorflow.keras import backend as K
@@ -57,7 +57,7 @@ def play(model):
         scores = pv_mcts_scores(model, deepcopy(state), SP_TEMPERATURE)
 
         # Adding the state and policy to the training data
-        policies = [0] * DN_OUTPUT_SIZE
+        policies = [0] * DN_POLICY_OUTPUT_SIZE
         for action, policy in zip(state.legal_actions(), scores):
             policies[action] = policy
         history.append([state.pieces_array(), policies, None])
