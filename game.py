@@ -14,7 +14,7 @@ from copy import deepcopy
 from constants import BOARD_SIZE, NUM_WALLS
 import diagnostics
 
-
+# TODO: see if using __slots__ (https://wiki.python.org/moin/UsingSlots) for the State class provides a MCTS speedup
 # Game state
 class State:
     def __init__(self, board_size=BOARD_SIZE, num_walls=NUM_WALLS, player=None, enemy=None, walls=None, depth=0):
