@@ -72,9 +72,10 @@ def evaluate_best_player():
     next_actions = (next_pv_mcts_action, random_action)
     evaluate_algorithm_of('VS_Random', next_actions)
 
-    # VS Alpha-Beta
-    next_actions = (next_pv_mcts_action, alpha_beta_action)
-    evaluate_algorithm_of('VS_AlphaBeta', next_actions)
+    # TODO: limit search depth to use with board size > 3
+    # # VS Alpha-Beta
+    # next_actions = (next_pv_mcts_action, alpha_beta_action)
+    # evaluate_algorithm_of('VS_AlphaBeta', next_actions)
 
     # VS Monte Carlo Tree Search
     next_actions = (next_pv_mcts_action, mcts_action)

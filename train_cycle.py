@@ -1,6 +1,7 @@
 # TODO: Performance increases.
 # TODO: Make sure all the modules work with a general board size and number of walls.
-#    Currently only tested size 3 with 1 wall.
+#    Tested size 3 with 1 wall and size 5 with 2 walls.
+#    Create a system which saves the data and models separately for each board size.
 from tensorflow.python.ops.logging_ops import Print
 
 # ====================
@@ -40,6 +41,6 @@ if __name__ == '__main__':
         update_best_player = evaluate_network()
 
         # Evaluating the best player
-        print('\nEvaluate best model against baseline algorithms ====================')
         if update_best_player:
+            print('\nEvaluate best model against baseline algorithms ====================')
             evaluate_best_player()

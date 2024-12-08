@@ -328,27 +328,29 @@ class State:
 
         def can_reach_goal(orientation, pos):
             def bfs(state):
-                queue = deque([state.player[0]])
                 visited = set()
+                visited.add(state.player[0])  # mark root node as visited
+                queue = deque([state.player[0]])
                 while queue:
-                    pos = queue.popleft()
-                    nps = state.legal_actions_pos(pos)
-                    for np in nps:
-                        x, y = np // N, np % N
-                        if y == 0:
-                            return True
-                        if np not in visited:
-                            visited.add(np)
-                            queue.append(np)
+                    position = queue.popleft()
+                    if position // N == 0:  # reached goal (farthest row)
+                        return True
+                    else:  # search child nodes (adjacent positions)
+                        new_positions = state.legal_actions_pos(position)
+                        for new_position in new_positions:
+                            if new_position not in visited:
+                                visited.add(new_position)
+                                queue.append(new_position)
                 return False
-
-            self.walls[pos] = orientation
-
+            # TODO: potential speedup by modifying then searching self (and reverting afterwards) instead of cloning.
+            # Check if player can still reach goal
             player_state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(),
                                  walls=deepcopy(self.walls), depth=self.depth)
+            player_state.walls[pos] = orientation
 
             can_reach_player = bfs(player_state)
 
+            # Check if enemy can still reach goal
             action = pos
             if orientation == 1:
                 action += N ** 2
@@ -356,10 +358,7 @@ class State:
                 action += N ** 2 + (N - 1) ** 2
 
             enemy_state = player_state.next(action)
-
             can_reach_enemy = bfs(enemy_state)
-
-            self.walls[pos] = 0
 
             return can_reach_player and can_reach_enemy
 
@@ -420,11 +419,11 @@ class State:
         is_first_player = self.is_first_player()
 
         # Create empty board
-        board = [['o'] * (2 * N - 1) for _ in range(2 * N - 1)]  # 'o' denotes a square on which a pawn can be placed
+        board = [['□'] * (2 * N - 1) for _ in range(2 * N - 1)]  # '□' denotes a square on which a pawn can be placed
         for i in range(2 * N - 1):
             for j in range(2 * N - 1):
                 if i % 2 == 1 or j % 2 == 1:
-                    board[i][j] = 'x'  # 'x' denotes grooves inbetween squares in which walls can be placed
+                    board[i][j] = ' '  # ' ' denotes grooves inbetween squares in which walls can be placed
 
 
         # mark player and enemy positions

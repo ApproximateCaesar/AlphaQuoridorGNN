@@ -1,7 +1,7 @@
 # ====================
 # Self-Play Part
 # ====================
-
+from diagnostics import time_this_function
 # Importing packages
 from game import State
 from pv_mcts import pv_mcts_scores
@@ -21,7 +21,7 @@ from cProfile import Profile
 from pstats import Stats
 
 # Preparing parameters
-SP_GAME_COUNT = 1  # Number of games for self-play (25000 in the original version)
+SP_GAME_COUNT = 5  # Number of games for self-play (25000 in the original version)
 SP_TEMPERATURE = 1.0  # Temperature parameter for Boltzmann distribution
 
 # Value of the first player
@@ -41,9 +41,9 @@ def write_data(history):
         pickle.dump(history, f)
 
 
-# TODO: Increase performance of play(). Currently takes around 20s per call for 3x3 board.
-
+# TODO: Increase performance of play(). Currently takes around 20s for 3x3 board and 30s for 5x5.
 # Executing one game
+@time_this_function
 def play(model):
     # Training data
     history = []
