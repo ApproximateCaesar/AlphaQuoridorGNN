@@ -1,4 +1,5 @@
-tensorflow
-numpy
+tensorflow~=2.18.0
+numpy~=2.0.2
 matplotlib
 pandas
+snakeviz~=2.2.0

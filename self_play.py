@@ -1,7 +1,7 @@
 # ====================
 # Self-Play Part
 # ====================
-from diagnostics import time_this_function
+from diagnostics import time_this_function, profile_this_function, speedtest
 # Importing packages
 from game import State
 from pv_mcts import pv_mcts_scores
@@ -21,7 +21,7 @@ from cProfile import Profile
 from pstats import Stats
 
 # Preparing parameters
-SP_GAME_COUNT = 5  # Number of games for self-play (25000 in the original version)
+SP_GAME_COUNT = 30  # Number of games for self-play (25000 in the original version)
 SP_TEMPERATURE = 1.0  # Temperature parameter for Boltzmann distribution
 
 # Value of the first player
@@ -43,7 +43,6 @@ def write_data(history):
 
 # TODO: Increase performance of play(). Currently takes around 20s for 3x3 board and 30s for 5x5.
 # Executing one game
-@time_this_function
 def play(model):
     # Training data
     history = []
@@ -76,6 +75,7 @@ def play(model):
     return history
 
 # Self-Play
+# @speedtest
 def self_play():
     # Training data
     history = []

@@ -17,6 +17,11 @@ import diagnostics
 # TODO: see if using __slots__ (https://wiki.python.org/moin/UsingSlots) for the State class provides a MCTS speedup
 # Game state
 class State:
+    """
+    :param walls: 1 by (N-1)^2 int array giving wall positions from the current player's perspective.
+        walls[i] > 0 implies there is a wall placed in the 2x2 square with top-left tile at position (i//N, i%N).
+        walls[i] = 0 if no wall, 1 if horizontal wall, and 2 if vertical wall.
+    """
     def __init__(self, board_size=BOARD_SIZE, num_walls=NUM_WALLS, player=None, enemy=None, walls=None, depth=0):
         self.N = board_size
         N = self.N

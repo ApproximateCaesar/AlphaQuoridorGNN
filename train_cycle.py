@@ -17,7 +17,7 @@ from evaluate_best_player import evaluate_best_player
 from constants import BOARD_SIZE
 
 # Number of NUM_EPOCH
-NUM_TRAIN_CYCLE = 2
+NUM_TRAIN_CYCLE = 3
 
 # Main function
 if __name__ == '__main__':
