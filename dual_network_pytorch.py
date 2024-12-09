@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 # Parameters
 from constants import BOARD_SIZE
 DN_FILTERS = 128  # Number of kernels/filters in the convolutional layer (256 in the original version)
@@ -30,10 +31,10 @@ class ConvBN(nn.Module):
 
 # Residual block
 class ResidualBlock(nn.Module):
-    def __init__(self, num_channels, num_filters):
+    def __init__(self, num_filters):
         super(ResidualBlock, self).__init__()
-        self.conv_bn1 = ConvBN(num_channels,num_filters)
-        self.conv_bn2 = ConvBN(num_channels,num_filters)
+        self.conv_bn1 = ConvBN(num_filters,num_filters)
+        self.conv_bn2 = ConvBN(num_filters,num_filters)
 
     def forward(self, x):
         residual = x
@@ -49,9 +50,9 @@ class DualNetwork(nn.Module):
         super(DualNetwork, self).__init__()
         self.conv = ConvBN(num_channels,num_filters)
         self.residual_blocks = nn.Sequential(
-            *[ResidualBlock(num_channels,num_filters) for _ in range(num_residual_blocks)]
+            *[ResidualBlock(num_filters) for _ in range(num_residual_blocks)]
         )
-        # TODO: verify the NN architecture is correct from hereon
+
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
 
         self.policy_head = nn.Sequential(
@@ -85,7 +86,7 @@ def create_dual_network():
 
     # Initialize the model
     model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
-    print(model)
+
     # Save the model
     os.makedirs('./model_pytorch/', exist_ok=True)
     torch.save(model.state_dict(), model_path)
