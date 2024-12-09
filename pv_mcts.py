@@ -1,7 +1,7 @@
 # ====================
 # Monte Carlo Tree Search Implementation
 # ====================
-
+from diagnostics import time_this_function
 # Import packages
 from game import State
 from dual_network import DN_INPUT_SHAPE
@@ -19,6 +19,7 @@ import diagnostics
 PV_EVALUATE_COUNT = 50 # Number of simulations per inference (original is 1600)
 
 # Inference
+# TODO: think this is the culprit for slow self-play. Currently takes 0.05s for 5x5 board.
 def predict(model, state):
     # Reshape input data for inference
     a, b, c = DN_INPUT_SHAPE

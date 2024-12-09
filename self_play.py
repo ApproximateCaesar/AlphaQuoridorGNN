@@ -21,7 +21,7 @@ from cProfile import Profile
 from pstats import Stats
 
 # Preparing parameters
-SP_GAME_COUNT = 30  # Number of games for self-play (25000 in the original version)
+SP_GAME_COUNT = 10  # Number of games for self-play (25000 in the original version)
 SP_TEMPERATURE = 1.0  # Temperature parameter for Boltzmann distribution
 
 # Value of the first player
@@ -41,8 +41,9 @@ def write_data(history):
         pickle.dump(history, f)
 
 
-# TODO: Increase performance of play(). Currently takes around 20s for 3x3 board and 30s for 5x5.
+# TODO: Increase performance of play(). Currently takes 35.5s (10-call average) for 5x5 board.
 # Executing one game
+@time_this_function
 def play(model):
     # Training data
     history = []
@@ -75,7 +76,6 @@ def play(model):
     return history
 
 # Self-Play
-# @speedtest
 def self_play():
     # Training data
     history = []

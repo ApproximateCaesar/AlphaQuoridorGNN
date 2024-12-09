@@ -26,10 +26,7 @@ def play(next_actions):
     state = State()
 
     # Loop until the game ends
-    while True:
-        # When the game ends
-        if state.is_done():
-            break
+    while not state.is_done():
 
         # Get action
         next_action = next_actions[0] if state.is_first_player() else next_actions[1]
@@ -50,7 +47,7 @@ def evaluate_algorithm_of(label, next_actions):
         if i % 2 == 0:
             total_point += play(next_actions)
         else:
-            total_point += 1 - play(list(reversed(next_actions)))
+            total_point += 1 - play(list(reversed(next_actions)))  # TODO: confirm that this if-else statement alternates who goes first in the eval games
 
         # Output
         print('\rEvaluate {}/{}'.format(i + 1, EP_GAME_COUNT), end='')

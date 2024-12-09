@@ -300,7 +300,6 @@ class State:
 
         return actions
 
-    # TODO: fix the illegal wall placement bug
     def legal_actions_wall(self, pos):
         N = self.N
         walls = self.walls
