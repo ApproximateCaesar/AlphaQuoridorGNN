@@ -16,7 +16,7 @@ from dual_network_pytorch import DualNetwork, DN_INPUT_SHAPE, DN_FILTERS, DN_POL
 # TODO: hardcode model constants intro DualNetwork so I don't always have to import them
 
 # Parameters
-SP_GAME_COUNT = 10  # Number of games for self-play (25000 in the original version)
+SP_GAME_COUNT = 50  # Number of games for self-play (25000 in the original version)
 SP_TEMPERATURE = 1.0  # Temperature parameter for Boltzmann distribution
 
 def first_player_value(ended_state):
@@ -66,12 +66,12 @@ def play(model, device):
 
     return history
 
-@speedtest
+
 def self_play():
     """Perform self-play games and save the training data."""
     # Training data
     history = []
-
+    # TODO: create a load model function
     # Load model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_path = './model_pytorch/best.pth'

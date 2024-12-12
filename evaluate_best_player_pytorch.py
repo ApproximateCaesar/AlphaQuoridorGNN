@@ -4,9 +4,9 @@
 
 # Import packages
 from game import State, random_action, alpha_beta_action, mcts_action
-from pv_mcts import pv_mcts_action
-from tensorflow.keras.models import load_model
-from tensorflow.keras import backend as K
+from pv_mcts_pytorch import pv_mcts_action
+import torch
+from dual_network_pytorch import DualNetwork, DN_INPUT_SHAPE, DN_POLICY_OUTPUT_SIZE, DN_FILTERS, DN_RESIDUAL_NUM
 from pathlib import Path
 import numpy as np
 
@@ -59,11 +59,16 @@ def evaluate_algorithm_of(label, next_actions):
 
 # Evaluation of the best player
 def evaluate_best_player():
-    # Load the model of the best player
-    model = load_model('./model/best.keras')
+    # Load best model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model_path = './model_pytorch/best.pth'
+    model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.to(device)
+    model.eval()
 
     # Generate a function to select actions using PV MCTS
-    next_pv_mcts_action = pv_mcts_action(model, 0.0)
+    next_pv_mcts_action = pv_mcts_action(model, 0.0, device)
 
     # VS Random
     next_actions = (next_pv_mcts_action, random_action)
@@ -78,9 +83,9 @@ def evaluate_best_player():
     next_actions = (next_pv_mcts_action, mcts_action)
     evaluate_algorithm_of('VS_MCTS', next_actions)
 
-    # Clear model
-    K.clear_session()
+    # Clean up
     del model
+    torch.cuda.empty_cache()
 
 # Operation check
 if __name__ == '__main__':

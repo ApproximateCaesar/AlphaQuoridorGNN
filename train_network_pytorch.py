@@ -7,12 +7,12 @@ from pathlib import Path
 import numpy as np
 import pickle
 from dual_network_pytorch import DualNetwork, DN_INPUT_SHAPE, DN_POLICY_OUTPUT_SIZE, DN_FILTERS, DN_RESIDUAL_NUM
-from torchsummary import summary
+
 
 NUM_EPOCH = 100
 BATCH_SIZE = 128
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f'Using device \'{DEVICE}\' for training.')
+
 
 def load_data():
     # Load the latest training data
@@ -100,7 +100,7 @@ def train_network():
         lr_scheduler.step()
 
         # Print progress
-        print(f"Epoch {epoch + 1}/{NUM_EPOCH} | Policy Loss: {epoch_policy_loss:.4f} | Value Loss: {epoch_value_loss:.4f}")
+        print(f"\rEpoch {epoch + 1}/{NUM_EPOCH} | Policy Loss: {epoch_policy_loss:.4f} | Value Loss: {epoch_value_loss:.4f}")
 
     # Save the latest model
     latest_model_path = './model_pytorch/latest.pth'
