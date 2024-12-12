@@ -11,7 +11,7 @@ from dual_network_pytorch import DualNetwork, DN_INPUT_SHAPE, DN_POLICY_OUTPUT_S
 import tkinter as tk
 
 # Loading the best player's model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model_path = './model_pytorch/best.pth'
 model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
 model.load_state_dict(torch.load(model_path, map_location=device))
