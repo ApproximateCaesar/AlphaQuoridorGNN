@@ -17,7 +17,7 @@ from evaluate_best_player import evaluate_best_player
 from constants import BOARD_SIZE
 
 # Number of NUM_EPOCH
-NUM_TRAIN_CYCLE = 3
+NUM_TRAIN_CYCLE = 200
 
 # Main function
 if __name__ == '__main__':
@@ -41,6 +41,6 @@ if __name__ == '__main__':
         update_best_player = evaluate_network()
 
         # Evaluating the best player
-        if update_best_player:
-            print('\nEvaluate best model against baseline algorithms ====================')
-            evaluate_best_player()
+        # if update_best_player:
+        #     print('\nEvaluate best model against baseline algorithms ====================')
+        #     evaluate_best_player()
