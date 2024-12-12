@@ -1,8 +1,11 @@
-# TODO: Performance increases.
+# TODO: Performance increases: https://pytorch.org/serve/performance_checklist.html
 # TODO: Make sure all the modules work with a general board size and number of walls.
 #    Tested size 3 with 1 wall and size 5 with 2 walls.
 #    Create a system which saves the data and models separately for each board size.
-from tensorflow.python.ops.logging_ops import Print
+# TODO: can probably just use
+#  device = 'cuda' if torch.cuda.is_available() else 'cpu'
+#  torch.set_default_device(device)
+#  at the start of this file instead of checking and passing 'device' between functions.
 
 # ====================
 # Execution of Learning Cycle
@@ -17,7 +20,7 @@ from evaluate_best_player_pytorch import evaluate_best_player
 from constants import BOARD_SIZE
 
 # Number of NUM_EPOCH
-NUM_TRAIN_CYCLE = 1
+NUM_TRAIN_CYCLE = 4
 
 # Main function
 if __name__ == '__main__':

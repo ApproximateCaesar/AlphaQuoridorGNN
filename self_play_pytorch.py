@@ -35,7 +35,7 @@ def write_data(history):
     with open(path, mode='wb') as f:
         pickle.dump(history, f)
 
-# @time_this_function
+
 def play(model, device):
     """Execute one self-play game."""
     history = []
@@ -66,7 +66,7 @@ def play(model, device):
 
     return history
 
-
+@speedtest
 def self_play():
     """Perform self-play games and save the training data."""
     # Training data

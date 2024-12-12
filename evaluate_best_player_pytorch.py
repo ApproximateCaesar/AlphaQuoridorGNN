@@ -60,7 +60,7 @@ def evaluate_algorithm_of(label, next_actions):
 # Evaluation of the best player
 def evaluate_best_player():
     # Load best model
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model_path = './model_pytorch/best.pth'
     model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
     model.load_state_dict(torch.load(model_path, map_location=device))

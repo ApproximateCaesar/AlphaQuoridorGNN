@@ -22,8 +22,10 @@ def predict(model, state, device):
     x = x.reshape(C, H, W)  # Shape: (C, H, W)
     x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)  # Add batch dimension and move to device
 
-    with torch.no_grad():  # disable gradient calculation to save memory during inference
-        policy, value = model(x)
+    # TODO: perform accurate timings to see if inference mode and amp actually provide speedup. Amp might also mess with precision.
+    with torch.inference_mode():  # disable gradient calculation to provide inference speedup
+        with torch.autocast(device_type=device):  # use mixed precision for speedup
+            policy, value = model(x)
 
     policy = policy[0][list(state.legal_actions())]  # Remove batch dimension and restrict to legal actions
 
