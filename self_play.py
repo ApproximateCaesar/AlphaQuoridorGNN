@@ -56,16 +56,16 @@ def play(model):
         # Getting the probability distribution of legal moves
         scores = pv_mcts_scores(model, deepcopy(state), SP_TEMPERATURE)
 
-        # Adding the state and policy to the training data
-        policies = [0] * DN_POLICY_OUTPUT_SIZE
-        for action, policy in zip(state.legal_actions(), scores):
-            policies[action] = policy
-        history.append([state.pieces_array(), policies, None])
+        # Record state and policy
+        policy = [0] * DN_POLICY_OUTPUT_SIZE
+        for action, action_prob in zip(state.legal_actions(), scores):
+            policy[action] = action_prob
+        history.append([state.pieces_array(), policy, None])
 
-        # Getting the action
+        # Choose an action based on the scores
         action = np.random.choice(state.legal_actions(), p=scores)
 
-        # Getting the next state
+        # Transition to the next state
         state = state.next(action)
 
     # Adding the value to the training data
@@ -73,6 +73,7 @@ def play(model):
     for i in range(len(history)):
         history[i][2] = value
         value = -value
+
     return history
 
 # Self-Play
@@ -89,8 +90,8 @@ def self_play():
         h = play(model)
         history.extend(h)
 
-        # Output
-        print('\rSelf-play (game {}/{})'.format(i+1, SP_GAME_COUNT), end='')
+        # Output progress
+        print(f'\rSelf-play (game {i + 1}/{SP_GAME_COUNT})', end='')
     print('')
 
     # Saving the training data
