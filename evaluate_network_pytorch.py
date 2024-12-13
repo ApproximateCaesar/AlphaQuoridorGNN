@@ -11,7 +11,7 @@ from shutil import copy
 import numpy as np
 
 # Prepare parameters
-EN_GAME_COUNT = 10 # Number of games per evaluation (originally 400)
+EN_GAME_COUNT = 15 # Number of games per evaluation (originally 400)
 EN_TEMPERATURE = 1.0 # Temperature of the Boltzmann distribution
 
 # Points for the first player

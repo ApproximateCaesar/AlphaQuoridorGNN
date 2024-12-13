@@ -20,7 +20,7 @@ from evaluate_best_player_pytorch import evaluate_best_player
 from constants import BOARD_SIZE
 
 # Number of NUM_EPOCH
-NUM_TRAIN_CYCLE = 4
+NUM_TRAIN_CYCLE = 100
 
 # Main function
 if __name__ == '__main__':
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         print('\nEvaluate new parameters ====================')
         update_best_player = evaluate_network()
 
-        # Evaluating the best player
-        if update_best_player:
-            print('\nEvaluate best model against baseline algorithms ====================')
-            evaluate_best_player()
+        # # Evaluating the best player
+        # if update_best_player:
+        #     print('\nEvaluate best model against baseline algorithms ====================')
+        #     evaluate_best_player()

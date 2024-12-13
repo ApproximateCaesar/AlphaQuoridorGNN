@@ -11,7 +11,7 @@ from dual_network_pytorch import DualNetwork, DN_INPUT_SHAPE, DN_POLICY_OUTPUT_S
 
 NUM_EPOCH = 100
 BATCH_SIZE = 128
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def load_data():
