@@ -66,7 +66,7 @@ def play(model, device):
 
     return history
 
-# @speedtest
+@speedtest
 def self_play():
     """Perform self-play games and save the training data."""
     # Training data
@@ -77,6 +77,7 @@ def self_play():
     model_path = './model_pytorch/best.pth'
     model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
     model.load_state_dict(torch.load(model_path, map_location=device))
+    model = torch.jit.script(model)  # converting model to torchscript increases performance
     model.to(device)
     model.eval()
 

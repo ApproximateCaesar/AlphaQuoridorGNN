@@ -483,44 +483,104 @@ def random_action(state):
 
 
 # Calculate state value using alpha-beta pruning
-def alpha_beta(state, alpha, beta):
-    # Loss is -1
-    if state.is_lose():
-        return -1
+# def alpha_beta(state, alpha, beta):
+#     # Loss is -1
+#     if state.is_lose():
+#         return -1
+#
+#     # Draw is 0
+#     if state.is_draw():
+#         return 0
+#
+#     # Calculate state values for legal actions
+#     for action in state.legal_actions():
+#         score = -alpha_beta(state.next(action), -beta, -alpha)
+#         if score > alpha:
+#             alpha = score
+#
+#         # If the best score for the current node exceeds the parent node, stop the search
+#         if alpha >= beta:
+#             return alpha
+#
+#     # Return the maximum value of the state values for legal actions
+#     return alpha
+#
+#
+# # TODO: Looks like alpha-beta algorithm doesn't limit its search depth. If not, implement this with eval function.
+# # Select an action using alpha-beta pruning
+# def alpha_beta_action(state):
+#     # Calculate state values for legal actions
+#     best_action = 0
+#     alpha = -float('inf')
+#     for action in state.legal_actions():
+#         score = -alpha_beta(state.next(action), -float('inf'), -alpha)
+#         if score > alpha:
+#             best_action = action
+#             alpha = score
+#
+#     # Return the action with the maximum state value
+#     return best_action
 
-    # Draw is 0
-    if state.is_draw():
-        return 0
 
-    # Calculate state values for legal actions
+def heuristic_eval(state):
+    """
+    Heuristic evaluation function to estimate the value of a game state in minimax search.
+    """
+
+    return 0
+
+
+# Modified alpha-beta with depth limitation
+def alpha_beta(state, alpha, beta, depth):
+    """
+    Alpha-beta pruning using depth-limited search and heuristic evaluation function.
+
+    :param state: Current game state
+    :param alpha: Alpha value for pruning
+    :param beta: Beta value for pruning
+    :param depth: Remaining depth to search
+    :return: Estimated value of the state
+    """
+    # Terminal conditions
+    if depth == 0 or state.is_lose() or state.is_draw():
+        if state.is_lose():
+            return -1  # Loss is -1
+        if state.is_draw():
+            return 0  # Draw is 0
+        return heuristic_eval(state)  # Evaluate the state at depth 0
+
+    # Search over legal actions
     for action in state.legal_actions():
-        score = -alpha_beta(state.next(action), -beta, -alpha)
+        score = -alpha_beta(state.next(action), -beta, -alpha, depth - 1)
         if score > alpha:
             alpha = score
 
-        # If the best score for the current node exceeds the parent node, stop the search
+        # Beta cutoff
         if alpha >= beta:
             return alpha
 
-    # Return the maximum value of the state values for legal actions
     return alpha
 
 
-# TODO: Looks like alpha-beta algorithm doesn't limit its search depth. If not, implement this with eval function.
-# Select an action using alpha-beta pruning
-def alpha_beta_action(state):
-    # Calculate state values for legal actions
-    best_action = 0
+# Select the best action using modified alpha-beta pruning
+def alpha_beta_action(state, max_depth):
+    """
+    Select the best action using alpha-beta pruning with depth limit.
+
+    :param state: Current game state
+    :param max_depth: Maximum depth to search
+    :return: The action with the maximum state value
+    """
+    best_action = None
     alpha = -float('inf')
+
     for action in state.legal_actions():
-        score = -alpha_beta(state.next(action), -float('inf'), -alpha)
+        score = -alpha_beta(state.next(action), -float('inf'), -alpha, max_depth)
         if score > alpha:
             best_action = action
             alpha = score
 
-    # Return the action with the maximum state value
     return best_action
-
 
 # Playout
 def playout(state):
