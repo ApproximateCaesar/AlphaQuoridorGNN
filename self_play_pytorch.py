@@ -11,13 +11,13 @@ import numpy as np
 
 from diagnostics import time_this_function, speedtest
 from game import State
-from pv_mcts_pytorch import pv_mcts_scores
+from pv_mcts_pytorch import pv_mcts_policy
 from dual_network_pytorch import DualNetwork, DN_INPUT_SHAPE, DN_FILTERS, DN_POLICY_OUTPUT_SIZE, DN_RESIDUAL_NUM
 # TODO: hardcode model constants intro DualNetwork so I don't always have to import them
 
 # Parameters
 SP_GAME_COUNT = 50  # Number of games for self-play (25000 in the original version)
-SP_TEMPERATURE = 1.0  # Temperature parameter for Boltzmann distribution
+SP_TEMPERATURE = 1.0 # Temperature parameter for Boltzmann distribution
 
 def first_player_value(ended_state):
     """Calculate the value of the first player based on the game result.
@@ -44,7 +44,7 @@ def play(model, device):
     while not state.is_done():  # while the game hasn't ended
 
         # Get the probability distribution of legal moves
-        scores = pv_mcts_scores(model, deepcopy(state), SP_TEMPERATURE, device)
+        scores = pv_mcts_policy(model, deepcopy(state), SP_TEMPERATURE, device)
 
         # Add state and policy to training data
         policy = [0] * DN_POLICY_OUTPUT_SIZE
@@ -66,7 +66,7 @@ def play(model, device):
 
     return history
 
-@speedtest
+
 def self_play():
     """Perform self-play games and save the training data."""
     # Training data

@@ -563,9 +563,9 @@ def alpha_beta(state, alpha, beta, depth):
 
 
 # Select the best action using modified alpha-beta pruning
-def alpha_beta_action(state, max_depth):
+def alpha_beta_action(state, max_depth=2):
     """
-    Select the best action using alpha-beta pruning with depth limit.
+    Select the best action using alpha-beta pruning.
 
     :param state: Current game state
     :param max_depth: Maximum depth to search

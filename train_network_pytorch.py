@@ -100,12 +100,13 @@ def train_network():
         lr_scheduler.step()
 
         # Print progress
-        print(f"\rEpoch {epoch + 1}/{NUM_EPOCH} | Policy Loss: {epoch_policy_loss:.4f} | Value Loss: {epoch_value_loss:.4f}")
+        print(f"\rEpoch {epoch + 1}/{NUM_EPOCH} | Policy Loss: {epoch_policy_loss:.4f} | Value Loss: {epoch_value_loss:.4f}", end='')
+    print('')
 
     # Save the latest model
     latest_model_path = './model_pytorch/latest.pth'
     torch.save(model.state_dict(), latest_model_path)
-    print(f"Model saved to {latest_model_path}")
+
 
 if __name__ == '__main__':
     train_network()

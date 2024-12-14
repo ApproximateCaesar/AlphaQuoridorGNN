@@ -27,7 +27,7 @@ def play(next_actions):
 
     # Loop until the game ends
     while not state.is_done():
-
+        print(state)
         # Get action
         next_action = next_actions[0] if state.is_first_player() else next_actions[1]
         action = next_action(state)
@@ -64,6 +64,7 @@ def evaluate_best_player():
     model_path = './model_pytorch/best.pth'
     model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
     model.load_state_dict(torch.load(model_path, map_location=device))
+    model = torch.jit.script(model)  # converting model to torchscript increases performance
     model.to(device)
     model.eval()
 
@@ -76,8 +77,8 @@ def evaluate_best_player():
 
     # TODO: limit search depth to use with board size > 3
     # # VS Alpha-Beta
-    # next_actions = (next_pv_mcts_action, alpha_beta_action)
-    # evaluate_algorithm_of('VS_AlphaBeta', next_actions)
+    next_actions = (next_pv_mcts_action, alpha_beta_action)
+    evaluate_algorithm_of('VS_AlphaBeta', next_actions)
 
     # VS Monte Carlo Tree Search
     next_actions = (next_pv_mcts_action, mcts_action)

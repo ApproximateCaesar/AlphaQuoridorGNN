@@ -1,7 +1,7 @@
 # TODO: fix bug where game freezes when invalid wall placement is attempted.
 #       Could also be just attempting to place a wall when you have none.
 # TODO: be able to choose which colour you start as (black or white).
-
+# TODO: allow play against other algorithms such as alpha-beta.
 
 # Importing necessary packages and modules
 import torch
@@ -15,6 +15,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 model_path = './model_pytorch/best.pth'
 model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
 model.load_state_dict(torch.load(model_path, map_location=device))
+model = torch.jit.script(model)  # converting model to torchscript increases performance
 model.to(device)
 model.eval()
 
@@ -28,7 +29,7 @@ class GameUI(tk.Frame):
         # Generating the game state
         self.state = State()
         self.N = self.state.N
-        self.D = 200  # Cell size (pixels)
+        self.D = 100  # Cell size (pixels). Adjust to fit your screen.
         self.L = self.N * self.D  # Canvas size
 
         self.select = -1  # Selection (-1: none, 0~(N*N-1): square)
