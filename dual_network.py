@@ -1,80 +1,99 @@
 # ====================
-# Creating the Dual Network
+# Creating the Dual Network using Pytorch in order to use GPU computation.
 # ====================
 
-# Importing packages
-from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input
-from tensorflow.keras.models import Model
-from tensorflow.keras.regularizers import l2
-from tensorflow.keras import backend as K
 import os
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torchsummary import summary
 
-# Preparing parameters
+# Parameters
 from constants import BOARD_SIZE
-DN_FILTERS  = 128  # Number of kernels in the convolutional layer (256 in the original version)
-DN_RESIDUAL_NUM =  16  # Number of residual blocks (19 in the original version)
-DN_INPUT_SHAPE = (BOARD_SIZE, BOARD_SIZE, 6)  # Input shape
-DN_POLICY_OUTPUT_SIZE = BOARD_SIZE**2 + 2*(BOARD_SIZE-1)**2  # Number of possible actions = N^2 player positions + 2*(N-1)^2 wall placements
+DN_FILTERS = 128  # Number of kernels/filters in the convolutional layer (256 in the original version)
+DN_RESIDUAL_NUM = 16  # Number of residual blocks (19 in the original version)
+DN_INPUT_SHAPE = (6, BOARD_SIZE, BOARD_SIZE)  # Input shape (Channels, Height, Width) for PyTorch Conv2d
+DN_POLICY_OUTPUT_SIZE = BOARD_SIZE ** 2 + 2 * (BOARD_SIZE - 1) ** 2  # Number of possible actions
 
-# Creating the convolutional layer
-def conv(filters):
-    return Conv2D(filters, 3, padding='same', use_bias=False,
-        kernel_initializer='he_normal', kernel_regularizer=l2(0.0005))
 
-# Creating the residual block
-def residual_block():
-    def f(x):
-        sc = x
-        x = conv(DN_FILTERS)(x)
-        x = BatchNormalization()(x)
-        x = Activation('relu')(x)
-        x = conv(DN_FILTERS)(x)
-        x = BatchNormalization()(x)
-        x = Add()([x, sc])
-        x = Activation('relu')(x)
+# Convolutional layer with batch normalization and ReLU
+class ConvBN(nn.Module):
+    def __init__(self, num_channels, num_filters):
+        super(ConvBN, self).__init__()
+        self.conv = nn.Conv2d(num_channels, num_filters, kernel_size=3, padding='same', bias=False)
+        self.bn = nn.BatchNorm2d(num_filters)
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
         return x
-    return f
 
-# Creating the dual network
-def dual_network():
+
+# Residual block
+class ResidualBlock(nn.Module):
+    def __init__(self, num_filters):
+        super(ResidualBlock, self).__init__()
+        self.conv_bn1 = ConvBN(num_filters,num_filters)
+        self.conv_bn2 = ConvBN(num_filters,num_filters)
+
+    def forward(self, x):
+        residual = x
+        x = F.relu(self.conv_bn1(x))
+        x = self.conv_bn2(x)
+        x += residual  # this is called a "skip connection"
+        return F.relu(x)
+
+
+# Dual network model
+class DualNetwork(nn.Module):
+    def __init__(self, num_channels, num_filters, num_residual_blocks, policy_output_size):
+        super(DualNetwork, self).__init__()
+        self.conv = ConvBN(num_channels,num_filters)
+        self.residual_blocks = nn.Sequential(
+            *[ResidualBlock(num_filters) for _ in range(num_residual_blocks)]
+        )
+
+        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
+
+        self.policy_head = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(num_filters, policy_output_size),
+            nn.Softmax(dim=1)
+        )
+
+        self.value_head = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(num_filters, 1),
+            nn.Tanh()
+        )
+
+    def forward(self, x):
+        x = F.relu(self.conv(x))
+        x = self.residual_blocks(x)
+        x = self.global_avg_pool(x)
+        policy = self.policy_head(x)
+        value = self.value_head(x)
+        return policy, value
+
+
+# Function to create the dual network
+def create_dual_network():
+    model_path = 'model/best.pth'
+
     # Do nothing if the model is already created
-    if os.path.exists('./model/best.keras'):
+    if os.path.exists(model_path):
         return
 
-    # Input layer
-    input = Input(shape=DN_INPUT_SHAPE)
+    # Initialize the model
+    model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
 
-    # Convolutional layer
-    x = conv(DN_FILTERS)(input)
-    x = BatchNormalization()(x)
-    x = Activation('relu')(x)
+    # Save the model
+    os.makedirs('model/', exist_ok=True)
+    torch.save(model.state_dict(), model_path)
 
-    # Residual blocks x 16
-    for i in range(DN_RESIDUAL_NUM):
-        x = residual_block()(x)
-
-    # Pooling layer
-    x = GlobalAveragePooling2D()(x)
-
-    # Policy output
-    p = Dense(DN_POLICY_OUTPUT_SIZE, kernel_regularizer=l2(0.0005),
-              activation='softmax', name='pi')(x)
-
-    # Value output
-    v = Dense(1, kernel_regularizer=l2(0.0005))(x)
-    v = Activation('tanh', name='v')(v)
-
-    # Creating the model
-    model = Model(inputs=input, outputs=[p, v])
-
-    # Saving the model
-    os.makedirs('./model/', exist_ok=True)  # Create folder if it does not exist
-    model.save('./model/best.keras')  # Best player's model
-
-    # Clearing the model
-    K.clear_session()
-    del model
 
 # Running the function
 if __name__ == '__main__':
-    dual_network()
+    create_dual_network()
+
+

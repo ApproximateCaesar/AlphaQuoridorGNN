@@ -1,65 +1,60 @@
 # ====================
-# Monte Carlo Tree Search Implementation
+# Policy-Value Monte Carlo Tree Search Implementation
 # ====================
-from diagnostics import time_this_function
-# Import packages
-from game import State
-from dual_network import DN_INPUT_SHAPE
-from math import sqrt
-from tensorflow.keras.models import load_model
-from pathlib import Path
+
+import torch
 import numpy as np
+from game import State
+from dual_network import DualNetwork, DN_INPUT_SHAPE, DN_FILTERS, DN_POLICY_OUTPUT_SIZE, DN_RESIDUAL_NUM
+from math import sqrt
 from copy import deepcopy
 import random
-
-import diagnostics
-
+from pathlib import Path
 
 # Prepare parameters
-PV_EVALUATE_COUNT = 50 # Number of simulations per inference (original is 1600)
+PV_EVALUATE_COUNT = 50  # Number of simulations per inference (original is 1600)
 
 # Inference
-# TODO: think this is the culprit for slow self-play. Currently takes 0.05s for 5x5 board.
-def predict(model, state):
+def predict(model, state, device):
     # Reshape input data for inference
-    a, b, c = DN_INPUT_SHAPE
+    C, H, W = DN_INPUT_SHAPE
     x = np.array(state.pieces_array())
-    x = x.reshape(c, a, b).transpose(1, 2, 0).reshape(1, a, b, c)
+    x = x.reshape(C, H, W)  # Shape: (C, H, W)
+    x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)  # Add batch dimension and move to device
 
-    # Inference
-    y = model.predict(x, batch_size=1, verbose=False)
+    with torch.inference_mode():  # disable gradient calculation to provide inference speedup
+        # with torch.autocast(device_type=device):  # using mixed precision showed a slight slowdown
+        policy, value = model(x)
 
-    # Get policy
-    policies = y[0][0][list(state.legal_actions())] # Only legal moves
-    policies /= np.sum(policies) if np.sum(policies) else 1 # Convert to a probability distribution summing to 1
+    policy = policy[0][list(state.legal_actions())]  # Remove batch dimension and restrict to legal actions
 
-    # Get value
-    value = y[1][0][0]
+    # Normalize policy distribution over the subset of legal actions
+    policy /= torch.sum(policy) if torch.sum(policy) else 1
 
-    return policies, value
+    policy = policy.cpu().numpy()  # tensor on GPU to numpy array on CPU
+    value = value.item()  # GPU tensor to float
 
-# Convert list of nodes to list of scores
-def nodes_to_scores(nodes):
-    scores = [child.n for child in nodes]
-    return scores
+    return policy, value
 
-# Get Monte Carlo Tree Search scores
-def pv_mcts_scores(model, state, temperature):
 
+def pv_mcts_policy(model, state, temperature, device):
+    """Use PUCT-based Monte Carlo Tree Search to return an improved policy (distribution over legal actions),
+    compared to the prior policy provided by the neural network."""
     # Define Monte Carlo Tree Search node
     class Node:
         def __init__(self, state, p):
-            self.state = state # State
-            self.p = p # probability of action that led to this state
-            self.w = 0 # Cumulative value
-            self.n = 0 # Number of simulations
+            self.state = state  # State
+            self.p = p  # prior probability of action that led to this state
+            self.w = 0  # Cumulative value
+            self.n = 0  # Number of simulations
             self.child_nodes = None  # Child nodes
 
         # Calculate value of the state
         def evaluate(self):
             # If the game is over
             if self.state.is_done():
-                # Get value from the game result
+                # Get value from the game result.
+                # Note: Don't need to account for win since a non-drawn game always ends on the loser's turn.
                 value = -1 if self.state.is_lose() else 0
                 # Update cumulative value and number of simulations
                 self.w += value
@@ -69,37 +64,37 @@ def pv_mcts_scores(model, state, temperature):
             # If there are no child nodes
             elif not self.child_nodes:
                 # Get policy and value from neural network inference
-                policy, value = predict(model, self.state)
+                prior_policy, value = predict(model, self.state, device)
                 # Update cumulative value and number of simulations
                 self.w += value
                 self.n += 1
 
                 # Expand child nodes
-                self.child_nodes = []
-                for action, action_prob in zip(self.state.legal_actions(), policy):
-                    self.child_nodes.append(Node(self.state.next(action), action_prob))
+                self.child_nodes = [
+                    Node(self.state.next(action), action_prob)
+                    for action, action_prob in zip(self.state.legal_actions(), prior_policy)
+                ]
                 return value
 
             # If there are child nodes
             else:
-                # Get value from the evaluation of the child node with the maximum arc evaluation value
+                # Get value from the evaluation of the child node with the maximum PUCT score
                 value = -self.next_child_node().evaluate()
                 # Update cumulative value and number of simulations
                 self.w += value
                 self.n += 1
                 return value
 
-        # Get child node with the maximum arc evaluation value
+        # Get child node with the maximum PUCT score
         def next_child_node(self):
-            # Calculate arc evaluation value
-            C_PUCT = 1.0
-            t = sum(nodes_to_scores(self.child_nodes))
-            pucb_values = []
-            for child_node in self.child_nodes:
-                pucb_values.append((-child_node.w / child_node.n if child_node.n else 0.0) +
-                    C_PUCT * child_node.p * sqrt(t) / (1 + child_node.n))
-
-            # Return child node with the maximum arc evaluation value
+            # Calculate PUCT scores
+            C_PUCT = 1.25  # TODO: explore this parameter. Originally 1.0.
+            t = sum([child.n for child in self.child_nodes])
+            pucb_values = [
+                (-child.w / child.n if child.n else 0.0) + C_PUCT * child.p * sqrt(t) / (1 + child.n)
+                for child in self.child_nodes
+            ]
+            # Return child node with the maximum PUCT score
             return self.child_nodes[np.argmax(pucb_values)]
 
     # Create a node for the current state
@@ -110,26 +105,26 @@ def pv_mcts_scores(model, state, temperature):
         root_node.evaluate()
 
     # Probability distribution of legal moves
-    scores = nodes_to_scores(root_node.child_nodes)
-    if temperature == 0: # Only the maximum value is 1
-        action = np.argmax(scores)
-        scores = np.zeros(len(scores))
-        scores[action] = 1
-    else: # Add variation with Boltzmann distribution
-        scores = boltzman(scores, temperature)
-    return scores
+    child_visit_counts = [child.n for child in root_node.child_nodes]  # number of MCTS visits to each child node
+    if temperature == 0:  # choose most-visited child
+        action = np.argmax(child_visit_counts)
+        mcts_policy = np.zeros(len(child_visit_counts))
+        mcts_policy[action] = 1 # Give most visited child probability 1
+    else:  # Add variation with Boltzmann distribution
+        mcts_policy = boltzman(child_visit_counts, temperature)
+    return mcts_policy
 
 # Action selection with Monte Carlo Tree Search
-def pv_mcts_action(model, temperature=0):
+def pv_mcts_action(model, temperature=0, device='cpu'):
     """Returns a function of the game state that selects an action based on PV-MCTS."""
     def pv_mcts_action(state):
-        scores = pv_mcts_scores(model, deepcopy(state), temperature)
-
-        return np.random.choice(state.legal_actions(), p=scores)
+        policy = pv_mcts_policy(model, deepcopy(state), temperature, device)
+        return np.random.choice(state.legal_actions(), p=policy)
     return pv_mcts_action
 
 # Boltzmann distribution
 def boltzman(xs, temperature):
+    """Boltzmann distribution """
     xs = [x ** (1 / temperature) for x in xs]
     return [x / sum(xs) for x in xs]
 
@@ -138,19 +133,22 @@ def random_action():
     def random_action(state):
         legal_actions = state.legal_actions()
         action = random.randint(0, len(legal_actions) - 1)
-
         return legal_actions[action]
     return random_action
 
 # Confirm operation
 if __name__ == '__main__':
     # Load model
-    path = sorted(Path('./model').glob('*.keras'))[-1]
-    model = load_model(str(path))
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model_path = sorted(Path('model').glob('*.pth'))[-1]
+    model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.to(device)
+    model.eval()
 
     # Play game using PV-MCTS
     state = State()
-    next_action = pv_mcts_action(model, 1.0)
+    next_action = pv_mcts_action(model, 1.0, device)
     while not state.is_done():
         action = next_action(state)
         state = state.next(action)

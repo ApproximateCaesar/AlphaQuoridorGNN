@@ -5,14 +5,13 @@
 # Import packages
 from game import State
 from pv_mcts import pv_mcts_action
-from tensorflow.keras.models import load_model
-from tensorflow.keras import backend as K
-from pathlib import Path
+import torch
+from dual_network import DualNetwork, DN_INPUT_SHAPE, DN_POLICY_OUTPUT_SIZE, DN_FILTERS, DN_RESIDUAL_NUM
 from shutil import copy
 import numpy as np
 
 # Prepare parameters
-EN_GAME_COUNT = 10 # Number of games per evaluation (originally 400)
+EN_GAME_COUNT = 15 # Number of games per evaluation (originally 400)
 EN_TEMPERATURE = 1.0 # Temperature of the Boltzmann distribution
 
 # Points for the first player
@@ -45,20 +44,28 @@ def play(next_actions):
 
 # Replace the best player
 def update_best_player():
-    copy('./model/latest.keras', './model/best.keras')
+    copy('model/latest.pth', 'model/best.pth')
     print('Latest model is better than current best. Replacing best model with latest.')
 
 # Network evaluation
 def evaluate_network():
-    # Load the model of the latest player
-    model0 = load_model('./model/latest.keras')
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    # Load the model of the best player
-    model1 = load_model('./model/best.keras')
+    # load latest model
+    model0 = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model0.load_state_dict(torch.load('model/latest.pth', map_location=device))
+    model0.to(device)
+    model0.eval()
+
+    # load best model
+    model1 = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model1.load_state_dict(torch.load('model/best.pth', map_location=device))
+    model1.to(device)
+    model1.eval()
 
     # Generate a function to select actions using PV MCTS
-    next_action0 = pv_mcts_action(model0, EN_TEMPERATURE)
-    next_action1 = pv_mcts_action(model1, EN_TEMPERATURE)
+    next_action0 = pv_mcts_action(model0, EN_TEMPERATURE, device)
+    next_action1 = pv_mcts_action(model1, EN_TEMPERATURE, device)
     next_actions = (next_action0, next_action1)
 
     # Repeat multiple matches
@@ -78,10 +85,10 @@ def evaluate_network():
     average_point = total_point / EN_GAME_COUNT
     print('Average points of latest model against current best:', average_point)
 
-    # Clear models
-    K.clear_session()
+    # Clean up
     del model0
     del model1
+    torch.cuda.empty_cache()
 
     # Replace the best player
     if average_point > 0.5:

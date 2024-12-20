@@ -1,38 +1,33 @@
 # ====================
-# Self-Play Part
+# Self-Play
 # ====================
-from diagnostics import time_this_function, profile_this_function, speedtest
-# Importing packages
-from game import State
-from pv_mcts import pv_mcts_scores
-from dual_network import DN_POLICY_OUTPUT_SIZE
-from datetime import datetime
-from tensorflow.keras.models import load_model
-from tensorflow.keras import backend as K
-from pathlib import Path
-import numpy as np
-import pickle
+
 import os
+import pickle
+from datetime import datetime
 from copy import deepcopy
+import torch
+import numpy as np
 
-import diagnostics
+from diagnostics import time_this_function, speedtest
+from game import State
+from pv_mcts import pv_mcts_policy
+from dual_network import DualNetwork, DN_INPUT_SHAPE, DN_FILTERS, DN_POLICY_OUTPUT_SIZE, DN_RESIDUAL_NUM
+# TODO: hardcode model constants intro DualNetwork so I don't always have to import them
 
-from cProfile import Profile
-from pstats import Stats
-
-# Preparing parameters
+# Parameters
 SP_GAME_COUNT = 50  # Number of games for self-play (25000 in the original version)
-SP_TEMPERATURE = 1.0  # Temperature parameter for Boltzmann distribution
+SP_TEMPERATURE = 1.0 # Temperature parameter for Boltzmann distribution
 
-# Value of the first player
 def first_player_value(ended_state):
-    # 1: First player wins, -1: First player loses, 0: Draw
+    """Calculate the value of the first player based on the game result.
+    1: First player wins, -1: First player loses, 0: Draw"""
     if ended_state.is_lose():
         return -1 if ended_state.is_first_player() else 1
     return 0
 
-# Saving training data
 def write_data(history):
+    """Save training data to a file."""
     now = datetime.now()
     os.makedirs('./data/', exist_ok=True)  # Create folder if it does not exist
     path = './data/{:04}{:02}{:02}{:02}{:02}{:02}.history'.format(
@@ -41,22 +36,17 @@ def write_data(history):
         pickle.dump(history, f)
 
 
-# TODO: Increase performance of play(). Currently takes 35.5s (10-call average) for 5x5 board.
-# Executing one game
-# @time_this_function
-def play(model):
-    # Training data
+def play(model, device):
+    """Execute one self-play game."""
     history = []
 
-    # Generating the state
     state = State()
+    while not state.is_done():  # while the game hasn't ended
 
-    while not state.is_done(): # while the game hasn't ended
+        # Get the probability distribution of legal moves
+        scores = pv_mcts_policy(model, deepcopy(state), SP_TEMPERATURE, device)
 
-        # Getting the probability distribution of legal moves
-        scores = pv_mcts_scores(model, deepcopy(state), SP_TEMPERATURE)
-
-        # Record state and policy
+        # Add state and policy to training data
         policy = [0] * DN_POLICY_OUTPUT_SIZE
         for action, action_prob in zip(state.legal_actions(), scores):
             policy[action] = action_prob
@@ -68,7 +58,7 @@ def play(model):
         # Transition to the next state
         state = state.next(action)
 
-    # Adding the value to the training data
+    # Add value to training data
     value = first_player_value(state)
     for i in range(len(history)):
         history[i][2] = value
@@ -76,31 +66,36 @@ def play(model):
 
     return history
 
-# Self-Play
+
 def self_play():
+    """Perform self-play games and save the training data."""
     # Training data
     history = []
+    # TODO: create a load model function
+    # Load model
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model_path = 'model/best.pth'
+    model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model = torch.jit.script(model)  # converting model to torchscript increases performance
+    model.to(device)
+    model.eval()
 
-    # Loading the best player's model
-    model = load_model('./model/best.keras')
-
-    # Executing multiple games
     for i in range(SP_GAME_COUNT):
-        # Executing one game
-        h = play(model)
+        # Execute one game
+        h = play(model, device)
         history.extend(h)
 
         # Output progress
         print(f'\rSelf-play (game {i + 1}/{SP_GAME_COUNT})', end='')
     print('')
 
-    # Saving the training data
+    # Save training data
     write_data(history)
 
-    # Clearing the model
-    K.clear_session()
+    # Clean up
     del model
+    torch.cuda.empty_cache()
 
-# Running the function
 if __name__ == '__main__':
     self_play()
