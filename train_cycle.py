@@ -15,7 +15,7 @@ from pv_network_cnn import create_network
 from self_play import self_play
 from train_network import train_network
 from evaluate_network import evaluate_network
-from evaluate_best_player import evaluate_best_player
+from evaluate_agents import evaluate_best_player
 from constants import BOARD_SIZE
 
 # Number of NUM_EPOCH

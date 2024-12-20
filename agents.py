@@ -23,6 +23,7 @@ def heuristic_eval(state):
     return 0
 
 
+# TODO: use principal variation approach to prevent loops in the search tree.
 def alpha_beta(state, alpha, beta, depth):
     """
     Alpha-beta pruning using depth-limited search and heuristic evaluation function.
@@ -55,7 +56,7 @@ def alpha_beta(state, alpha, beta, depth):
 
 
 # Select the best action using alpha-beta pruning
-def alpha_beta_action(state, max_depth=2):
+def alpha_beta_action(state, max_depth=5):
     """
     Select the best action using alpha-beta pruning.
 
@@ -193,7 +194,7 @@ if __name__ == '__main__':
     while not state.is_done():
 
         # Get the next state
-        state = state.next(mcts_action(state))
+        state = state.next(alpha_beta_action(state))
         # Display as a string
         print(state)
         print()
