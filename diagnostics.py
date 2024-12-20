@@ -8,8 +8,6 @@ import pstats
 import snakeviz.cli as cli
 from io import StringIO
 
-from tensorflow.python.keras.utils.metrics_utils import result_wrapper
-
 
 def time_this_function(func):
     def wrapper(*args, **kwargs):

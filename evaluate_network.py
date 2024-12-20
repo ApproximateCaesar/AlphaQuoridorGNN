@@ -3,10 +3,10 @@
 # ====================
 
 # Import packages
-from game import State
+from game_logic import State
 from pv_mcts import pv_mcts_action
 import torch
-from dual_network import DualNetwork, DN_INPUT_SHAPE, DN_POLICY_OUTPUT_SIZE, DN_FILTERS, DN_RESIDUAL_NUM
+from pv_network_cnn import Network, INPUT_SHAPE, POLICY_OUTPUT_SIZE, NUM_FILTERS, NUM_RESIDUAL_BLOCKS
 from shutil import copy
 import numpy as np
 
@@ -52,13 +52,13 @@ def evaluate_network():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # load latest model
-    model0 = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model0 = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
     model0.load_state_dict(torch.load('model/latest.pth', map_location=device))
     model0.to(device)
     model0.eval()
 
     # load best model
-    model1 = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model1 = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
     model1.load_state_dict(torch.load('model/best.pth', map_location=device))
     model1.to(device)
     model1.eval()

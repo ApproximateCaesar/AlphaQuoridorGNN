@@ -1,7 +1,5 @@
 # TODO: Performance increases: https://pytorch.org/serve/performance_checklist.html
-# TODO: Make sure all the modules work with a general board size and number of walls.
-#    Tested size 3 with 1 wall and size 5 with 2 walls.
-#    Create a system which saves the data and models separately for each board size.
+# TODO: Create a system which saves the data and models separately for each board size.
 # TODO: can probably just use
 #  device = 'cuda' if torch.cuda.is_available() else 'cpu'
 #  torch.set_default_device(device)
@@ -13,7 +11,7 @@
 # ====================
 
 # Importing packages
-from dual_network import create_dual_network
+from pv_network_cnn import create_network
 from self_play import self_play
 from train_network import train_network
 from evaluate_network import evaluate_network
@@ -28,7 +26,7 @@ if __name__ == '__main__':
     print(f'Board size {BOARD_SIZE}')
 
     # Creating the dual network
-    create_dual_network()
+    create_network()
 
     for i in range(NUM_TRAIN_CYCLE):
         print(f'\nBegin training cycle {i+1}/{NUM_TRAIN_CYCLE} ====================')

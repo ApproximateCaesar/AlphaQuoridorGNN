@@ -1,6 +1,6 @@
-# ====================
-# Creating the Dual Network using Pytorch in order to use GPU computation.
-# ====================
+"""
+Define the Policy-Value (PV) Network using a CNN architecture.
+"""
 
 import os
 import torch
@@ -10,10 +10,10 @@ from torchsummary import summary
 
 # Parameters
 from constants import BOARD_SIZE
-DN_FILTERS = 128  # Number of kernels/filters in the convolutional layer (256 in the original version)
-DN_RESIDUAL_NUM = 16  # Number of residual blocks (19 in the original version)
-DN_INPUT_SHAPE = (6, BOARD_SIZE, BOARD_SIZE)  # Input shape (Channels, Height, Width) for PyTorch Conv2d
-DN_POLICY_OUTPUT_SIZE = BOARD_SIZE ** 2 + 2 * (BOARD_SIZE - 1) ** 2  # Number of possible actions
+NUM_FILTERS = 128  # Number of kernels/filters in the convolutional layer (256 in AlphaZero)
+NUM_RESIDUAL_BLOCKS = 16  # Number of residual blocks (19 in AlphaZero)
+INPUT_SHAPE = (6, BOARD_SIZE, BOARD_SIZE)  # Input shape: (Channels, Height, Width) for PyTorch Conv2d
+POLICY_OUTPUT_SIZE = BOARD_SIZE ** 2 + 2 * (BOARD_SIZE - 1) ** 2  # Number of possible actions
 
 
 # Convolutional layer with batch normalization and ReLU
@@ -44,10 +44,10 @@ class ResidualBlock(nn.Module):
         return F.relu(x)
 
 
-# Dual network model
-class DualNetwork(nn.Module):
+# Network model
+class Network(nn.Module):
     def __init__(self, num_channels, num_filters, num_residual_blocks, policy_output_size):
-        super(DualNetwork, self).__init__()
+        super(Network, self).__init__()
         self.conv = ConvBN(num_channels,num_filters)
         self.residual_blocks = nn.Sequential(
             *[ResidualBlock(num_filters) for _ in range(num_residual_blocks)]
@@ -77,7 +77,7 @@ class DualNetwork(nn.Module):
 
 
 # Function to create the dual network
-def create_dual_network():
+def create_network():
     model_path = 'model/best.pth'
 
     # Do nothing if the model is already created
@@ -85,7 +85,7 @@ def create_dual_network():
         return
 
     # Initialize the model
-    model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
 
     # Save the model
     os.makedirs('model/', exist_ok=True)
@@ -94,6 +94,6 @@ def create_dual_network():
 
 # Running the function
 if __name__ == '__main__':
-    create_dual_network()
+    create_network()
 
 

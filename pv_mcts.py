@@ -4,8 +4,8 @@
 
 import torch
 import numpy as np
-from game import State
-from dual_network import DualNetwork, DN_INPUT_SHAPE, DN_FILTERS, DN_POLICY_OUTPUT_SIZE, DN_RESIDUAL_NUM
+from game_logic import State
+from pv_network_cnn import Network, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE, NUM_RESIDUAL_BLOCKS
 from math import sqrt
 from copy import deepcopy
 import random
@@ -17,7 +17,7 @@ PV_EVALUATE_COUNT = 50  # Number of simulations per inference (original is 1600)
 # Inference
 def predict(model, state, device):
     # Reshape input data for inference
-    C, H, W = DN_INPUT_SHAPE
+    C, H, W = INPUT_SHAPE
     x = np.array(state.pieces_array())
     x = x.reshape(C, H, W)  # Shape: (C, H, W)
     x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)  # Add batch dimension and move to device
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     # Load model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_path = sorted(Path('model').glob('*.pth'))[-1]
-    model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     model.eval()

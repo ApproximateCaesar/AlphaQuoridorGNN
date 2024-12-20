@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from pathlib import Path
 import numpy as np
 import pickle
-from dual_network import DualNetwork, DN_INPUT_SHAPE, DN_POLICY_OUTPUT_SIZE, DN_FILTERS, DN_RESIDUAL_NUM
+from pv_network_cnn import Network, INPUT_SHAPE, POLICY_OUTPUT_SIZE, NUM_FILTERS, NUM_RESIDUAL_BLOCKS
 
 
 NUM_EPOCH = 100
@@ -27,7 +27,7 @@ def train_network():
     s, p, v = zip(*history)
 
     # Reshape the input data for training
-    C, H, W = DN_INPUT_SHAPE
+    C, H, W = INPUT_SHAPE
     s = np.array(s).reshape(len(s), C, H, W)  # Shape: (N, C, H, W)
     p = np.array(p)  # Policy targets
     v = np.array(v)  # Value targets
@@ -43,7 +43,7 @@ def train_network():
     data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     # Load the model
-    model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
 
     model_path = 'model/best.pth'
     if os.path.exists(model_path):

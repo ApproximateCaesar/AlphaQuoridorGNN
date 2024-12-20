@@ -10,9 +10,9 @@ import torch
 import numpy as np
 
 from diagnostics import time_this_function, speedtest
-from game import State
+from game_logic import State
 from pv_mcts import pv_mcts_policy
-from dual_network import DualNetwork, DN_INPUT_SHAPE, DN_FILTERS, DN_POLICY_OUTPUT_SIZE, DN_RESIDUAL_NUM
+from pv_network_cnn import Network, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE, NUM_RESIDUAL_BLOCKS
 # TODO: hardcode model constants intro DualNetwork so I don't always have to import them
 
 # Parameters
@@ -47,7 +47,7 @@ def play(model, device):
         scores = pv_mcts_policy(model, deepcopy(state), SP_TEMPERATURE, device)
 
         # Add state and policy to training data
-        policy = [0] * DN_POLICY_OUTPUT_SIZE
+        policy = [0] * POLICY_OUTPUT_SIZE
         for action, action_prob in zip(state.legal_actions(), scores):
             policy[action] = action_prob
         history.append([state.pieces_array(), policy, None])
@@ -75,7 +75,7 @@ def self_play():
     # Load model
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model_path = 'model/best.pth'
-    model = DualNetwork(DN_INPUT_SHAPE[0], DN_FILTERS, DN_RESIDUAL_NUM, DN_POLICY_OUTPUT_SIZE)
+    model = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model = torch.jit.script(model)  # converting model to torchscript increases performance
     model.to(device)
