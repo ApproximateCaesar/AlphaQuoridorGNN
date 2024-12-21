@@ -6,9 +6,13 @@ Each agent is represented by a function that takes in the game state and returns
 import random
 import math
 from game_logic import State
+from collections import deque
+from constants import NUM_PLIES_FOR_DRAW, NUM_WALLS
+MAX_DIST_FROM_GOAL = NUM_PLIES_FOR_DRAW//2 - NUM_WALLS  # TODO: calculate this in a nicer way.
 
 # Agent that randomly selects an action
 def random_action(state):
+    """Returns a function of the game state that selects a uniformly random action."""
     legal_actions = state.legal_actions()
     action = random.randint(0, len(legal_actions) - 1)
     return legal_actions[action]
@@ -20,8 +24,35 @@ def heuristic_eval(state):
     Heuristic evaluation function to estimate the value of a game state in minimax search.
     """
 
-    return 0
+    def shortest_path_bfs(state):
+        visited = set()
+        visited.add(state.player[0])  # mark root node as visited
+        queue = deque([(state.player[0], 0)])  # queue storing (position, depth) pairs
+        while queue:
+            position, depth = queue.popleft()
+            if position // state.N == 0:  # reached goal (farthest row)
+                return depth
+            else:  # search child nodes (adjacent positions)
+                new_positions = state.legal_actions_pos(position)
+                for new_position in new_positions:
+                    if new_position not in visited:
+                        visited.add(new_position)
+                        queue.append((new_position, depth+1))
+        return -1  # return -1 if no path exists TODO: make this throw an error instead
 
+    def shortest_path_diff(state):
+        shortest_path_player = shortest_path_bfs(state)
+        # transform state to be from enemy's perspective
+        state.rotate_walls()
+        state.player, state.enemy = state.enemy, state.player
+        shortest_path_enemy = shortest_path_bfs(state)
+        # transform state back TODO: copy the state to be safer?
+        state.rotate_walls()
+        state.player, state.enemy = state.enemy, state.player
+        return (shortest_path_enemy - shortest_path_player) / MAX_DIST_FROM_GOAL
+
+    return shortest_path_diff(state)
+# TODO: find a way to account for which player jumps over the other first when comparing shortest paths. This can make a huge difference in small boards.
 
 # TODO: use principal variation approach to prevent loops in the search tree.
 def alpha_beta(state, alpha, beta, depth):
@@ -56,7 +87,7 @@ def alpha_beta(state, alpha, beta, depth):
 
 
 # Select the best action using alpha-beta pruning
-def alpha_beta_action(state, max_depth=5):
+def alpha_beta_action(state, max_depth=4):
     """
     Select the best action using alpha-beta pruning.
 

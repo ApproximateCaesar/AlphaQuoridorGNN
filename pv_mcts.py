@@ -128,13 +128,6 @@ def boltzman(xs, temperature):
     xs = [x ** (1 / temperature) for x in xs]
     return [x / sum(xs) for x in xs]
 
-def random_action():
-    """Returns a function of the game state that selects a uniformly random action."""
-    def random_action(state):
-        legal_actions = state.legal_actions()
-        action = random.randint(0, len(legal_actions) - 1)
-        return legal_actions[action]
-    return random_action
 
 # Confirm operation
 if __name__ == '__main__':
