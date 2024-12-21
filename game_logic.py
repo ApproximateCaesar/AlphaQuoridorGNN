@@ -11,6 +11,8 @@ from copy import deepcopy
 from constants import BOARD_SIZE, NUM_WALLS, NUM_PLIES_FOR_DRAW
 import diagnostics
 
+MOVEMENT_DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # directions in which pawns can move
+
 # TODO: see if using __slots__ (https://wiki.python.org/moin/UsingSlots) for the State class provides a MCTS speedup
 # Game state
 class State:
@@ -19,17 +21,16 @@ class State:
         walls[i] > 0 implies there is a wall placed in the 2x2 square with top-left tile at position (i//N, i%N).
         walls[i] = 0 if no wall, 1 if horizontal wall, and 2 if vertical wall.
     """
+
     def __init__(self, board_size=BOARD_SIZE, num_walls=NUM_WALLS, player=None, enemy=None, walls=None, depth=0):
         self.N = board_size
         N = self.N
         if N % 2 == 0:
             raise ValueError('The board size must be an odd number.')
-        self.directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         self.player = player if player is not None else [0] * 2  # Position, number of walls
         self.enemy = enemy if enemy is not None else [0] * 2
         self.walls = walls if walls is not None else [0] * ((N - 1) ** 2)
         self.depth = depth  # number of plies (moves by either player) played
-        self.draw_depth = NUM_PLIES_FOR_DRAW  # number of plies after which the game is assumed to be a draw
 
         if player is None or enemy is None:
             init_pos = N * (N - 1) + N // 2
@@ -46,13 +47,16 @@ class State:
 
     # Check if it's a draw
     def is_draw(self):
-        return self.depth >= self.draw_depth
+        return self.depth >= NUM_PLIES_FOR_DRAW
 
     # Check if the game is over
     def is_done(self):
         return self.is_lose() or self.is_draw()
 
     def pieces_array(self):
+        """
+        :returns: Game state represented as a
+        """
         N = self.N
 
         def pieces_of(pieces):
@@ -94,7 +98,6 @@ class State:
             tables.append(table_v)
 
             return tables
-
         return [pieces_of(self.player), pieces_of(self.enemy), walls_of(self.walls)]
 
     def legal_actions(self):
@@ -121,7 +124,7 @@ class State:
         ep = self.enemy[0]
 
         x, y = pos // N, pos % N
-        for dx, dy in self.directions:
+        for dx, dy in MOVEMENT_DIRECTIONS:
             nx, ny = x + dx, y + dy
             if 0 <= nx < N and 0 <= ny < N:
                 np = N * nx + ny
@@ -470,3 +473,4 @@ class State:
 
         board_str = '\n'.join([''.join(row) for row in board])
         return turn_info + '\n' + board_str + win_info
+

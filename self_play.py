@@ -13,7 +13,7 @@ from diagnostics import time_this_function, speedtest
 from game_logic import State
 from pv_mcts import pv_mcts_policy
 from pv_network_cnn import Network, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE, NUM_RESIDUAL_BLOCKS
-# TODO: hardcode model constants intro DualNetwork so I don't always have to import them
+# TODO: hardcode model constants into DualNetwork so I don't always have to import them
 
 # Parameters
 SP_GAME_COUNT = 50  # Number of games for self-play (25000 in the original version)

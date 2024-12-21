@@ -87,7 +87,7 @@ def alpha_beta(state, alpha, beta, depth):
 
 
 # Select the best action using alpha-beta pruning
-def alpha_beta_action(state, max_depth=4):
+def alpha_beta_action(state, max_depth=3):
     """
     Select the best action using alpha-beta pruning.
 
@@ -225,7 +225,8 @@ if __name__ == '__main__':
     while not state.is_done():
 
         # Get the next state
-        state = state.next(alpha_beta_action(state))
+        state = state.next(random_action(state))
         # Display as a string
         print(state)
+        print(state.walls)
         print()
