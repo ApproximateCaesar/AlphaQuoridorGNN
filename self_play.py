@@ -9,7 +9,7 @@ from copy import deepcopy
 import torch
 import numpy as np
 
-from diagnostics import time_this_function, speedtest
+from code_profiling_util import time_this_function, speedtest
 from game_logic import State
 from pv_mcts import pv_mcts_policy
 from pv_network_cnn import Network, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE, NUM_RESIDUAL_BLOCKS

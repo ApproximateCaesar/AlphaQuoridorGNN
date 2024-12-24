@@ -6,10 +6,8 @@
 
 # Importing packages
 from collections import deque
-import copy
-from copy import deepcopy
 from constants import BOARD_SIZE, NUM_WALLS, NUM_PLIES_FOR_DRAW
-import diagnostics
+import code_profiling_util
 
 MOVEMENT_DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # directions in which pawns can move
 
@@ -20,17 +18,20 @@ class State:
     :param walls: 1 by (N-1)^2 int array giving wall positions from the current player's perspective.
         walls[i] > 0 implies there is a wall placed in the 2x2 square with top-left tile at position (i//N, i%N).
         walls[i] = 0 if no wall, 1 if horizontal wall, and 2 if vertical wall.
+    :param player: 1 by 2 int array [position, number of walls]. Position is given as a linear index from the player's own perspective.
+    :param enemy: 1 by 2 int array [position, number of walls]. Position is given as a linear index from the enemy's own perspective.
+    :param plies_played: number of plies (1 ply = 1 turn taken by 1 player) played so far.
     """
 
-    def __init__(self, board_size=BOARD_SIZE, num_walls=NUM_WALLS, player=None, enemy=None, walls=None, depth=0):
+    def __init__(self, board_size=BOARD_SIZE, num_walls=NUM_WALLS, player=None, enemy=None, walls=None, plies_played=0):
         self.N = board_size
         N = self.N
         if N % 2 == 0:
             raise ValueError('The board size must be an odd number.')
-        self.player = player if player is not None else [0] * 2  # Position, number of walls
+        self.player = player if player is not None else [0] * 2
         self.enemy = enemy if enemy is not None else [0] * 2
         self.walls = walls if walls is not None else [0] * ((N - 1) ** 2)
-        self.depth = depth  # number of plies (moves by either player) played
+        self.plies_played = plies_played
 
         if player is None or enemy is None:
             init_pos = N * (N - 1) + N // 2
@@ -47,29 +48,64 @@ class State:
 
     # Check if it's a draw
     def is_draw(self):
-        return self.depth >= NUM_PLIES_FOR_DRAW
+        return self.plies_played >= NUM_PLIES_FOR_DRAW
 
     # Check if the game is over
     def is_done(self):
         return self.is_lose() or self.is_draw()
 
-    def pieces_array(self):
+    # def pieces_array(self):
+    #     """
+    #     :returns: Game state represented as a
+    #     """
+    #     N = self.N
+    #
+    #     def pieces_of(pieces):
+    #         tables = []
+    #
+    #         table = [0] * (N ** 2)
+    #         table[pieces[0]] = 1
+    #         tables.append(table)
+    #
+    #         table = [pieces[1]] * (N ** 2)
+    #         tables.append(table)
+    #
+    #         return tables
+    #
+    #     def walls_of(walls):
+    #         tables = []
+    #
+    #         table_h = [0] * (N ** 2)
+    #         table_v = [0] * (N ** 2)
+    #
+    #         for wp in range((N - 1) ** 2):
+    #             x, y = wp // (N - 1), wp % (N - 1)
+    #
+    #             if x < (N - 1) // 2 and y < (N - 1) // 2:
+    #                 pos = N * x + y
+    #             elif x > (N - 1) // 2 and y < (N - 1) // 2:
+    #                 pos = N * x + (y + 1)
+    #             elif x < (N - 1) // 2 and y > (N - 1) // 2:
+    #                 pos = N * (x + 1) + y
+    #             else:
+    #                 pos = N * (x + 1) + (y + 1)
+    #
+    #             if walls[wp] == 1:
+    #                 table_h[pos] = 1
+    #             elif walls[wp] == 2:
+    #                 table_v[pos] = 1
+    #
+    #         tables.append(table_h)
+    #         tables.append(table_v)
+    #
+    #         return tables
+    #     return [pieces_of(self.player), pieces_of(self.enemy), walls_of(self.walls)]
+
+    def to_list(self):
         """
         :returns: Game state represented as a
         """
         N = self.N
-
-        def pieces_of(pieces):
-            tables = []
-
-            table = [0] * (N ** 2)
-            table[pieces[0]] = 1
-            tables.append(table)
-
-            table = [pieces[1]] * (N ** 2)
-            tables.append(table)
-
-            return tables
 
         def walls_of(walls):
             tables = []
@@ -98,7 +134,7 @@ class State:
             tables.append(table_v)
 
             return tables
-        return [pieces_of(self.player), pieces_of(self.enemy), walls_of(self.walls)]
+        return [self.player, self.enemy, walls_of(self.walls)]
 
     def legal_actions(self):
         """
@@ -349,7 +385,7 @@ class State:
             # TODO: potential speedup by modifying then searching self (and reverting afterwards) instead of cloning.
             # Check if player can still reach goal
             player_state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(),
-                                 walls=deepcopy(self.walls), depth=self.depth)
+                                 walls=self.walls.copy(), plies_played=self.plies_played)
             player_state.walls[pos] = orientation
 
             can_reach_player = bfs(player_state)
@@ -385,8 +421,8 @@ class State:
     def next(self, action):
         N = self.N
         # Create the next state
-        state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(), walls=deepcopy(self.walls),
-                      depth=self.depth + 1)
+        state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(), walls=self.walls.copy(),
+                      plies_played=self.plies_played + 1)
 
         if action < N ** 2:
             # Move piece
@@ -411,7 +447,7 @@ class State:
 
     # Check if it's the first player's turn
     def is_first_player(self):
-        return self.depth % 2 == 0
+        return self.plies_played % 2 == 0
 
     # TODO: maybe rewrite this in terms of first and second player to be less confusing
     def __str__(self):

@@ -76,7 +76,7 @@ class Network(nn.Module):
         return policy, value
 
 
-# Function to create the dual network
+# Function to create the policy-value network
 def create_network():
     model_path = 'model/best.pth'
 

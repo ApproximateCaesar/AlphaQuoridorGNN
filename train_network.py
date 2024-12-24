@@ -31,6 +31,7 @@ def train_network():
     s = np.array(s).reshape(len(s), C, H, W)  # Shape: (N, C, H, W)
     p = np.array(p)  # Policy targets
     v = np.array(v)  # Value targets
+    print(s,p,v)
 
     # Convert data to PyTorch tensors
     s = torch.tensor(s, dtype=torch.float32)
