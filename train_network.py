@@ -20,6 +20,57 @@ def load_data():
     with history_path.open(mode='rb') as f:
         return pickle.load(f)
 
+# def preprocess_input(game_state_arrays):
+#     """Processes raw input given as a list of game state arrays, where each game state is of the form
+#      [player, enemy, walls], i.e. the output of State.to_array(). Input is converted to the form accepted
+#      by the neural network.
+#      :returns input: transformed input to be accepted by the neural network."""
+#
+#     N = self.N
+#     player, enemy, walls = game_state_arrays
+#
+#     def pieces_of(pieces):
+#         tables = []
+#
+#         table = [0] * (N ** 2)
+#         table[pieces[0]] = 1
+#         tables.append(table)
+#
+#         table = [pieces[1]] * (N ** 2)
+#         tables.append(table)
+#
+#         return tables
+#
+#     def walls_of(walls):
+#         tables = []
+#
+#         table_h = [0] * (N ** 2)
+#         table_v = [0] * (N ** 2)
+#
+#         for wp in range((N - 1) ** 2):
+#             x, y = wp // (N - 1), wp % (N - 1)
+#
+#             if x < (N - 1) // 2 and y < (N - 1) // 2:
+#                 pos = N * x + y
+#             elif x > (N - 1) // 2 and y < (N - 1) // 2:
+#                 pos = N * x + (y + 1)
+#             elif x < (N - 1) // 2 and y > (N - 1) // 2:
+#                 pos = N * (x + 1) + y
+#             else:
+#                 pos = N * (x + 1) + (y + 1)
+#
+#             if walls[wp] == 1:
+#                 table_h[pos] = 1
+#             elif walls[wp] == 2:
+#                 table_v[pos] = 1
+#
+#         tables.append(table_h)
+#         tables.append(table_v)
+#
+#         return tables
+#
+#     return [pieces_of(self.player), pieces_of(self.enemy), walls_of(self.walls)]
+
 
 def train_network():
     # Load the training data
@@ -31,7 +82,7 @@ def train_network():
     s = np.array(s).reshape(len(s), C, H, W)  # Shape: (N, C, H, W)
     p = np.array(p)  # Policy targets
     v = np.array(v)  # Value targets
-    print(s,p,v)
+    print(s)
 
     # Convert data to PyTorch tensors
     s = torch.tensor(s, dtype=torch.float32)

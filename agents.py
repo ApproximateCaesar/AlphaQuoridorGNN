@@ -2,7 +2,7 @@
 Here we define a selection of Quoridor-playing agents that employ different algorithms.
 Each agent is represented by a function that takes in the game state and returns an action.
 """
-
+import numpy as np
 import random
 import math
 from game_logic import State
@@ -229,4 +229,7 @@ if __name__ == '__main__':
         # Display as a string
         print(state)
         print(state.walls)
+        x = np.array(state.pieces_array())
+        x = x.reshape(6, 5, 5)  # Shape: (C, H, W)
+        print(x[4:6])
         print()

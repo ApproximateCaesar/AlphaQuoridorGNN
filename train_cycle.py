@@ -5,7 +5,7 @@
 #  torch.set_default_device(device)
 #  at the start of this file instead of checking and passing 'device' between functions.
 
-#  TODO: track model performance over training cycles.
+#  TODO: track model performance over training cycles and the number of self-play games performed.
 # ====================
 # Execution of Learning Cycle
 # ====================

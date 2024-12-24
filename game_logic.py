@@ -16,7 +16,7 @@ MOVEMENT_DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # directions in which 
 class State:
     """
     :param walls: 1 by (N-1)^2 int array giving wall positions from the current player's perspective.
-        walls[i] > 0 implies there is a wall placed in the 2x2 square with top-left tile at position (i//N, i%N).
+        walls[i] > 0 implies there is a wall placed in the 2x2 square with top-left tile at linear index i, that is, at (row, col) = (i//N, i%N).
         walls[i] = 0 if no wall, 1 if horizontal wall, and 2 if vertical wall.
     :param player: 1 by 2 int array [position, number of walls]. Position is given as a linear index from the player's own perspective.
     :param enemy: 1 by 2 int array [position, number of walls]. Position is given as a linear index from the enemy's own perspective.
@@ -54,87 +54,52 @@ class State:
     def is_done(self):
         return self.is_lose() or self.is_draw()
 
-    # def pieces_array(self):
-    #     """
-    #     :returns: Game state represented as a
-    #     """
-    #     N = self.N
-    #
-    #     def pieces_of(pieces):
-    #         tables = []
-    #
-    #         table = [0] * (N ** 2)
-    #         table[pieces[0]] = 1
-    #         tables.append(table)
-    #
-    #         table = [pieces[1]] * (N ** 2)
-    #         tables.append(table)
-    #
-    #         return tables
-    #
-    #     def walls_of(walls):
-    #         tables = []
-    #
-    #         table_h = [0] * (N ** 2)
-    #         table_v = [0] * (N ** 2)
-    #
-    #         for wp in range((N - 1) ** 2):
-    #             x, y = wp // (N - 1), wp % (N - 1)
-    #
-    #             if x < (N - 1) // 2 and y < (N - 1) // 2:
-    #                 pos = N * x + y
-    #             elif x > (N - 1) // 2 and y < (N - 1) // 2:
-    #                 pos = N * x + (y + 1)
-    #             elif x < (N - 1) // 2 and y > (N - 1) // 2:
-    #                 pos = N * (x + 1) + y
-    #             else:
-    #                 pos = N * (x + 1) + (y + 1)
-    #
-    #             if walls[wp] == 1:
-    #                 table_h[pos] = 1
-    #             elif walls[wp] == 2:
-    #                 table_v[pos] = 1
-    #
-    #         tables.append(table_h)
-    #         tables.append(table_v)
-    #
-    #         return tables
-    #     return [pieces_of(self.player), pieces_of(self.enemy), walls_of(self.walls)]
-
-    def to_list(self):
+    def pieces_array(self):
         """
         :returns: Game state represented as a
         """
         N = self.N
 
-        def walls_of(walls):
+        def pawn_table(player):
+            tables = []
+
+            table = [0] * (N ** 2)
+            table[player[0]] = 1
+            tables.append(table)
+
+            table = [player[1]] * (N ** 2)
+            tables.append(table)
+
+            return tables
+
+        def wall_table(walls):
             tables = []
 
             table_h = [0] * (N ** 2)
             table_v = [0] * (N ** 2)
 
-            for wp in range((N - 1) ** 2):
-                x, y = wp // (N - 1), wp % (N - 1)
+            for wall_index in range((N - 1) ** 2):
+                # get linear index of top-left tile within the 2x2 square in which the wall is placed
+                top_left_tile_index = N * (wall_index // (N - 1)) + (wall_index % (N - 1))
 
-                if x < (N - 1) // 2 and y < (N - 1) // 2:
-                    pos = N * x + y
-                elif x > (N - 1) // 2 and y < (N - 1) // 2:
-                    pos = N * x + (y + 1)
-                elif x < (N - 1) // 2 and y > (N - 1) // 2:
-                    pos = N * (x + 1) + y
-                else:
-                    pos = N * (x + 1) + (y + 1)
-
-                if walls[wp] == 1:
-                    table_h[pos] = 1
-                elif walls[wp] == 2:
-                    table_v[pos] = 1
+                if walls[wall_index] == 1:
+                    table_h[top_left_tile_index] = 1
+                elif walls[wall_index] == 2:
+                    table_v[top_left_tile_index] = 1
 
             tables.append(table_h)
             tables.append(table_v)
 
             return tables
-        return [self.player, self.enemy, walls_of(self.walls)]
+        return [pawn_table(self.player), pawn_table(self.enemy), wall_table(self.walls)]
+
+
+    def to_array(self):
+        """
+        :returns: Array containing the game state variables [player, enemy, walls].
+        """
+        return [self.player.copy(), self.enemy.copy(), self.walls.copy()]
+
 
     def legal_actions(self):
         """
