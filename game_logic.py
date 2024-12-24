@@ -330,18 +330,22 @@ class State:
                     if walls[pos - (N - 1)] == 2 or walls[pos + (N - 1)] == 2:
                         return False
             return True
-
+        # TODO: fix illegal wall bug. Bug is in legal_actions_pos because player jumps through wall during bfs
         def can_reach_goal(orientation, pos):
             def bfs(state):
                 visited = set()
+
                 visited.add(state.player[0])  # mark root node as visited
                 queue = deque([state.player[0]])
                 while queue:
                     position = queue.popleft()
+
+                    print((position//N, position%N))
                     if position // N == 0:  # reached goal (farthest row)
                         return True
                     else:  # search child nodes (adjacent positions)
                         new_positions = state.legal_actions_pos(position)
+                        print([(position//N, position%N) for position in new_positions])
                         for new_position in new_positions:
                             if new_position not in visited:
                                 visited.add(new_position)
@@ -352,6 +356,7 @@ class State:
             player_state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(),
                                  walls=self.walls.copy(), plies_played=self.plies_played)
             player_state.walls[pos] = orientation
+            print('player bfs:\n')
 
             can_reach_player = bfs(player_state)
 
@@ -363,7 +368,9 @@ class State:
                 action += N ** 2 + (N - 1) ** 2
 
             enemy_state = player_state.next(action)
+            print('enemy bfs:\n')
             can_reach_enemy = bfs(enemy_state)
+
 
             return can_reach_player and can_reach_enemy
 

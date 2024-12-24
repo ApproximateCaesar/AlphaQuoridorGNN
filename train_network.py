@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from pathlib import Path
 import numpy as np
 import pickle
-from pv_network_cnn import Network, INPUT_SHAPE, POLICY_OUTPUT_SIZE, NUM_FILTERS, NUM_RESIDUAL_BLOCKS
+from pv_network_cnn import Network, INPUT_SHAPE, POLICY_OUTPUT_SIZE, NUM_FILTERS, NUM_RESIDUAL_BLOCKS, BOARD_SIZE
 
 
 NUM_EPOCH = 100
@@ -20,56 +20,55 @@ def load_data():
     with history_path.open(mode='rb') as f:
         return pickle.load(f)
 
-# def preprocess_input(game_state_arrays):
-#     """Processes raw input given as a list of game state arrays, where each game state is of the form
-#      [player, enemy, walls], i.e. the output of State.to_array(). Input is converted to the form accepted
-#      by the neural network.
-#      :returns input: transformed input to be accepted by the neural network."""
-#
-#     N = self.N
-#     player, enemy, walls = game_state_arrays
-#
-#     def pieces_of(pieces):
-#         tables = []
-#
-#         table = [0] * (N ** 2)
-#         table[pieces[0]] = 1
-#         tables.append(table)
-#
-#         table = [pieces[1]] * (N ** 2)
-#         tables.append(table)
-#
-#         return tables
-#
-#     def walls_of(walls):
-#         tables = []
-#
-#         table_h = [0] * (N ** 2)
-#         table_v = [0] * (N ** 2)
-#
-#         for wp in range((N - 1) ** 2):
-#             x, y = wp // (N - 1), wp % (N - 1)
-#
-#             if x < (N - 1) // 2 and y < (N - 1) // 2:
-#                 pos = N * x + y
-#             elif x > (N - 1) // 2 and y < (N - 1) // 2:
-#                 pos = N * x + (y + 1)
-#             elif x < (N - 1) // 2 and y > (N - 1) // 2:
-#                 pos = N * (x + 1) + y
-#             else:
-#                 pos = N * (x + 1) + (y + 1)
-#
-#             if walls[wp] == 1:
-#                 table_h[pos] = 1
-#             elif walls[wp] == 2:
-#                 table_v[pos] = 1
-#
-#         tables.append(table_h)
-#         tables.append(table_v)
-#
-#         return tables
-#
-#     return [pieces_of(self.player), pieces_of(self.enemy), walls_of(self.walls)]
+
+# TODO: simplify this function. maybe directly produce 2d arrays from raw input. Replace all references of pieces_array. Finally make this method a cnn class method.
+def preprocess_input(game_state_arrays):
+    """Processes raw input given as a list of game state arrays, where each game state is of the form
+     [player, enemy, walls], i.e. the output of State.to_array(). Input is converted to the form accepted
+     by the neural network.
+     :returns input: transformed input to be accepted by the neural network."""
+    N = BOARD_SIZE
+
+    def pawn_table(player):
+        tables = []
+
+        table = [0] * (N ** 2)
+        table[player[0]] = 1
+        tables.append(table)
+
+        table = [player[1]] * (N ** 2)
+        tables.append(table)
+
+        return tables
+
+    def wall_table(walls):
+        tables = []
+
+        table_h = [0] * (N ** 2)
+        table_v = [0] * (N ** 2)
+
+        for wall_index in range((N - 1) ** 2):
+            # get linear index of top-left tile within the 2x2 square in which the wall is placed
+            top_left_tile_index = N * (wall_index // (N - 1)) + (wall_index % (N - 1))
+
+            if walls[wall_index] == 1:
+                table_h[top_left_tile_index] = 1
+            elif walls[wall_index] == 2:
+                table_v[top_left_tile_index] = 1
+
+        tables.append(table_h)
+        tables.append(table_v)
+
+        return tables
+
+    processed_input = [[pawn_table(state[0]), pawn_table(state[1]), wall_table(state[2])] for state in game_state_arrays]
+    C, H, W = INPUT_SHAPE
+    processed_input = np.array(processed_input).reshape(len(processed_input), C, H, W)  # Shape: (N, C, H, W)
+    print(processed_input)
+
+    return processed_input
+
+
 
 
 def train_network():
@@ -78,11 +77,11 @@ def train_network():
     s, p, v = zip(*history)
 
     # Reshape the input data for training
-    C, H, W = INPUT_SHAPE
-    s = np.array(s).reshape(len(s), C, H, W)  # Shape: (N, C, H, W)
+    # C, H, W = INPUT_SHAPE
+    # s = np.array(s).reshape(len(s), C, H, W)  # Shape: (N, C, H, W)
+    s = preprocess_input(s)
     p = np.array(p)  # Policy targets
     v = np.array(v)  # Value targets
-    print(s)
 
     # Convert data to PyTorch tensors
     s = torch.tensor(s, dtype=torch.float32)

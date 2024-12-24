@@ -87,7 +87,7 @@ def alpha_beta(state, alpha, beta, depth):
 
 
 # Select the best action using alpha-beta pruning
-def alpha_beta_action(state, max_depth=3):
+def alpha_beta_action(state, max_depth=2):
     """
     Select the best action using alpha-beta pruning.
 

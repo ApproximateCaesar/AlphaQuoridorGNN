@@ -16,7 +16,7 @@ from pv_network_cnn import Network, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE
 # TODO: hardcode model constants into DualNetwork so I don't always have to import them
 
 # Parameters
-SP_GAME_COUNT = 50  # Number of games for self-play (25000 in the original version)
+SP_GAME_COUNT = 10  # Number of games for self-play (25000 in the original version)
 SP_TEMPERATURE = 1.0 # Temperature parameter for Boltzmann distribution
 
 def first_player_value(ended_state):
@@ -50,7 +50,7 @@ def play(model, device):
         policy = [0] * POLICY_OUTPUT_SIZE
         for action, action_prob in zip(state.legal_actions(), scores):
             policy[action] = action_prob
-        history.append([state.pieces_array(), policy, None])
+        history.append([state.to_array(), policy, None])
 
         # Choose an action based on the scores
         action = np.random.choice(state.legal_actions(), p=scores)
