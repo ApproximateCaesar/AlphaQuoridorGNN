@@ -109,7 +109,7 @@ class State:
         Actions (N ** 2 + (N - 1) ** 2) to (N ** 2 + 2 * (N - 1) ** 2 - 1): Place a vertical wall
         """
         actions = []
-        actions.extend(self.legal_actions_pawn(self.player[0]))
+        actions.extend(self.legal_actions_pos(self.player[0]))
 
         if self.player[1] > 0:
             for pos in range((self.N - 1) ** 2):
@@ -118,7 +118,7 @@ class State:
         return actions
 
     # TODO: test this function extensively and compare speed to old implementation (legal_actions_pos).
-    def legal_actions_pawn(self, pos):
+    def legal_actions_pos(self, pos):
         """
         Get all legal pawn moves.
 
@@ -146,23 +146,23 @@ class State:
         def is_wall_blocking(x, y, nx, ny):
             """Check if a wall is blocking movement between (x, y) and (nx, ny)."""
             if nx > x:  # Moving down
-                blocking_bottom_right = (walls[x * (N - 1) + y] == 1 if y < N - 1 else True)
-                blocking_bottom_left = (walls[x * (N - 1) + y - 1] == 1 if y > 0 else True)
+                blocking_bottom_right = (walls[x * (N - 1) + y] == 1 if y < N - 1 else False)
+                blocking_bottom_left = (walls[x * (N - 1) + y - 1] == 1 if y > 0 else False)
                 return blocking_bottom_right or blocking_bottom_left
 
             if nx < x:  # Moving up
-                blocking_top_right = (walls[(x - 1) * (N - 1) + y] == 1 if y < N - 1 else True)
-                blocking_top_left = (walls[(x - 1) * (N - 1) + y - 1] == 1 if y > 0 else True)
+                blocking_top_right = (walls[(x - 1) * (N - 1) + y] == 1 if y < N - 1 else False)
+                blocking_top_left = (walls[(x - 1) * (N - 1) + y - 1] == 1 if y > 0 else False)
                 return blocking_top_right or blocking_top_left
 
             if ny > y:  # Moving right
-                blocking_bottom_right = (walls[x * (N - 1) + y] == 2 if x < N - 1 else True)
-                blocking_top_right = (walls[(x - 1) * (N - 1) + y] == 2 if x > 0 else True)
+                blocking_bottom_right = (walls[x * (N - 1) + y] == 2 if x < N - 1 else False)
+                blocking_top_right = (walls[(x - 1) * (N - 1) + y] == 2 if x > 0 else False)
                 return blocking_bottom_right or blocking_top_right
 
             if ny < y:  # Moving left
-                blocking_bottom_left = (walls[x * (N - 1) + (y - 1)] == 2 if x < N - 1 else True)
-                blocking_top_left = (walls[(x - 1) * (N - 1) + (y - 1)] == 2 if x > 0 else True)
+                blocking_bottom_left = (walls[x * (N - 1) + (y - 1)] == 2 if x < N - 1 else False)
+                blocking_top_left = (walls[(x - 1) * (N - 1) + (y - 1)] == 2 if x > 0 else False)
                 return blocking_bottom_left or blocking_top_left
 
             return False  # No movement
@@ -193,7 +193,7 @@ class State:
         return actions
 
     # TODO: REPLACE THIS BUGGY MESS
-    def legal_actions_pos(self, pos):
+    def legal_actions_pos_old(self, pos):
         actions = []
 
         N = self.N
@@ -411,7 +411,7 @@ class State:
                     if walls[pos - (N - 1)] == 2 or walls[pos + (N - 1)] == 2:
                         return False
             return True
-        # TODO: fix illegal wall bug. Bug is in legal_actions_pos because player jumps through wall during bfs
+        # TODO: potential speedup by not calling can_reach_goal if wall isn't touching any other wall.
         def can_reach_goal(orientation, pos):
             def bfs(state):
                 visited = set()
@@ -427,7 +427,7 @@ class State:
                     if position // N == 0:  # reached goal (farthest row)
                         return True
                     else:  # search child nodes (adjacent positions)
-                        new_positions = state.legal_actions_pawn(position)
+                        new_positions = state.legal_actions_pos(position)
                         # print([(position//N, position%N) for position in new_positions])
                         for new_position in new_positions:
                             if new_position not in visited:
