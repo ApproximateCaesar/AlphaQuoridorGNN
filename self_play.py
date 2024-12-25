@@ -16,7 +16,7 @@ from pv_network_cnn import Network, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE
 # TODO: hardcode model constants into DualNetwork so I don't always have to import them
 
 # Parameters
-SP_GAME_COUNT = 10  # Number of games for self-play (25000 in the original version)
+SP_GAME_COUNT = 50  # Number of games for self-play (25000 in the original version)
 SP_TEMPERATURE = 1.0 # Temperature parameter for Boltzmann distribution
 
 def first_player_value(ended_state):

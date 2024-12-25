@@ -64,7 +64,7 @@ def preprocess_input(game_state_arrays):
     processed_input = [[pawn_table(state[0]), pawn_table(state[1]), wall_table(state[2])] for state in game_state_arrays]
     C, H, W = INPUT_SHAPE
     processed_input = np.array(processed_input).reshape(len(processed_input), C, H, W)  # Shape: (N, C, H, W)
-    print(processed_input)
+    # print(processed_input)
 
     return processed_input
 

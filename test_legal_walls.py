@@ -22,3 +22,4 @@ print(state.legal_actions_wall(pos=26))  # shows as legal
 
 
 
+

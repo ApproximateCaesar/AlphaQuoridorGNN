@@ -9,7 +9,7 @@ from collections import deque
 from constants import BOARD_SIZE, NUM_WALLS, NUM_PLIES_FOR_DRAW
 import code_profiling_util
 
-MOVEMENT_DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # directions in which pawns can move
+MOVEMENT_DIRECTIONS = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # directions in which pawns can move (U,D,L,R)
 
 # TODO: see if using __slots__ (https://wiki.python.org/moin/UsingSlots) for the State class provides a MCTS speedup
 # Game state
@@ -109,7 +109,7 @@ class State:
         Actions (N ** 2 + (N - 1) ** 2) to (N ** 2 + 2 * (N - 1) ** 2 - 1): Place a vertical wall
         """
         actions = []
-        actions.extend(self.legal_actions_pos(self.player[0]))
+        actions.extend(self.legal_actions_pawn(self.player[0]))
 
         if self.player[1] > 0:
             for pos in range((self.N - 1) ** 2):
@@ -117,6 +117,82 @@ class State:
 
         return actions
 
+    # TODO: test this function extensively and compare speed to old implementation (legal_actions_pos).
+    def legal_actions_pawn(self, pos):
+        """
+        Get all legal pawn moves.
+
+        Parameters:
+        - pos: int, current pawn position (linear index).
+
+        Returns:
+        - list of int: Linear indices of legal moves.
+        """
+
+        actions = []
+        N = self.N
+        walls = self.walls
+
+        x, y = pos // N, pos % N
+        enemy_pos = (N**2 - 1) - self.enemy[0]  # convert to player's perspective
+        enemy_x, enemy_y = enemy_pos // N, enemy_pos % N
+
+        def get_linear_index(nx, ny):
+            return nx * N + ny
+
+        def is_within_board(nx, ny):
+            return 0 <= nx < N and 0 <= ny < N
+
+        def is_wall_blocking(x, y, nx, ny):
+            """Check if a wall is blocking movement between (x, y) and (nx, ny)."""
+            if nx > x:  # Moving down
+                blocking_bottom_right = (walls[x * (N - 1) + y] == 1 if y < N - 1 else True)
+                blocking_bottom_left = (walls[x * (N - 1) + y - 1] == 1 if y > 0 else True)
+                return blocking_bottom_right or blocking_bottom_left
+
+            if nx < x:  # Moving up
+                blocking_top_right = (walls[(x - 1) * (N - 1) + y] == 1 if y < N - 1 else True)
+                blocking_top_left = (walls[(x - 1) * (N - 1) + y - 1] == 1 if y > 0 else True)
+                return blocking_top_right or blocking_top_left
+
+            if ny > y:  # Moving right
+                blocking_bottom_right = (walls[x * (N - 1) + y] == 2 if x < N - 1 else True)
+                blocking_top_right = (walls[(x - 1) * (N - 1) + y] == 2 if x > 0 else True)
+                return blocking_bottom_right or blocking_top_right
+
+            if ny < y:  # Moving left
+                blocking_bottom_left = (walls[x * (N - 1) + (y - 1)] == 2 if x < N - 1 else True)
+                blocking_top_left = (walls[(x - 1) * (N - 1) + (y - 1)] == 2 if x > 0 else True)
+                return blocking_bottom_left or blocking_top_left
+
+            return False  # No movement
+
+        for dx, dy in MOVEMENT_DIRECTIONS:
+            nx, ny = x + dx, y + dy
+            if is_within_board(nx, ny):
+                if not is_wall_blocking(x, y, nx, ny):  # Check if direct move is valid
+                    np = get_linear_index(nx, ny)
+                    if (nx, ny) == (enemy_x, enemy_y):  # If enemy is blocking, consider jumping
+                        nnx, nny = nx + dx, ny + dy
+                        if is_within_board(nnx, nny) and not is_wall_blocking(nx, ny, nnx, nny):
+                            actions.append(get_linear_index(nnx, nny))  # straight jump
+                        else:  # Consider diagonal jumps
+                            if dx != 0:  # Moving vertically, check left and right
+                                if is_within_board(nx, ny - 1) and not is_wall_blocking(nx, ny, nx, ny - 1):
+                                    actions.append(get_linear_index(nx, ny - 1))
+                                if is_within_board(nx, ny + 1) and not is_wall_blocking(nx, ny, nx, ny + 1):
+                                    actions.append(get_linear_index(nx, ny + 1))
+                            elif dy != 0:  # Moving horizontally, check up and down
+                                if is_within_board(nx - 1, ny) and not is_wall_blocking(nx, ny, nx - 1, ny):
+                                    actions.append(get_linear_index(nx - 1, ny))
+                                if is_within_board(nx + 1, ny) and not is_wall_blocking(nx, ny, nx + 1, ny):
+                                    actions.append(get_linear_index(nx + 1, ny))
+                    else:  # Direct move
+                        actions.append(np)
+
+        return actions
+
+    # TODO: REPLACE THIS BUGGY MESS
     def legal_actions_pos(self, pos):
         actions = []
 
@@ -127,10 +203,11 @@ class State:
         x, y = pos // N, pos % N
         for dx, dy in MOVEMENT_DIRECTIONS:
             nx, ny = x + dx, y + dy
-            if 0 <= nx < N and 0 <= ny < N:
-                np = N * nx + ny
+            if 0 <= nx < N and 0 <= ny < N:  # within the game board
+                np = N * nx + ny  # linear index of the proposed new pawn position
                 wp = (N - 1) * nx + ny
 
+                # move up
                 if nx < x:
                     if y == 0:
                         if walls[wp] != 1:
@@ -173,6 +250,7 @@ class State:
                                             nx > 0 and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
                                         nnp = np + 1
                                         actions.append(nnp)
+                # move down
                 if nx > x:
                     if y == 0:
                         if walls[wp - (N - 1)] != 1:
@@ -215,6 +293,7 @@ class State:
                                             nx < (N - 1) and walls[wp - (N - 1)] != 2 and walls[wp] != 2):
                                         nnp = np + 1
                                         actions.append(nnp)
+                # move left
                 if ny < y:
                     if x == 0:
                         if walls[wp] != 2:
@@ -240,22 +319,24 @@ class State:
                                     nnp = np - N
                                     actions.append(nnp)
                     else:
-                        if walls[wp - (N - 1)] != 2 and walls[wp] != 2:
-                            if np + ep != N ** 2 - 1:
+                        if walls[wp - (N - 1)] != 2 and walls[wp] != 2:  # not directly blocked by wall
+                            if np + ep != N ** 2 - 1:  # not blocked by enemy
                                 actions.append(np)
-                            else:
-                                if ny > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2:
+                            else:  # blocked by enemy - test for possible jumps
+                                if ny > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - 1] != 2:  # straight jump
                                     nnp = np - 1
                                     actions.append(nnp)
-                                else:
+                                else:  # diagonal jumps
                                     if (ny == 0 and walls[wp - (N - 1)] != 1) or (
-                                            ny > 0 and walls[wp - (N - 1) - 1] != 2 and walls[wp - (N - 1)] != 1):
+                                            ny > 0 and walls[wp - (N - 1) - 1] != 1 and walls[wp - (N - 1)] != 1):
                                         nnp = np - N
                                         actions.append(nnp)
+
                                     if (ny == 0 and walls[wp] != 1) or (
-                                            ny > 0 and (walls[wp - 1] != 1 or walls[wp] != 1)):
+                                            ny > 0 and walls[wp - 1] != 1 and walls[wp] != 1):
                                         nnp = np + N
                                         actions.append(nnp)
+                # move right
                 if ny > y:
                     if x == 0:
                         if walls[wp - 1] != 2:
@@ -295,7 +376,7 @@ class State:
                                         nnp = np - N
                                         actions.append(nnp)
                                     if (ny == (N - 1) and walls[wp - 1] != 1) or (
-                                            ny < (N - 1) and (walls[wp - 1] != 1 or walls[wp] != 1)):
+                                            ny < (N - 1) and walls[wp - 1] != 1 and walls[wp] != 1):
                                         nnp = np + N
                                         actions.append(nnp)
 
@@ -338,14 +419,16 @@ class State:
                 visited.add(state.player[0])  # mark root node as visited
                 queue = deque([state.player[0]])
                 while queue:
+                    # print(queue)
+                    # print(visited)
                     position = queue.popleft()
 
-                    print((position//N, position%N))
+                    # print(f'pop {position} == {(position//N, position%N)}')
                     if position // N == 0:  # reached goal (farthest row)
                         return True
                     else:  # search child nodes (adjacent positions)
-                        new_positions = state.legal_actions_pos(position)
-                        print([(position//N, position%N) for position in new_positions])
+                        new_positions = state.legal_actions_pawn(position)
+                        # print([(position//N, position%N) for position in new_positions])
                         for new_position in new_positions:
                             if new_position not in visited:
                                 visited.add(new_position)
@@ -356,8 +439,6 @@ class State:
             player_state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(),
                                  walls=self.walls.copy(), plies_played=self.plies_played)
             player_state.walls[pos] = orientation
-            print('player bfs:\n')
-
             can_reach_player = bfs(player_state)
 
             # Check if enemy can still reach goal
@@ -368,7 +449,6 @@ class State:
                 action += N ** 2 + (N - 1) ** 2
 
             enemy_state = player_state.next(action)
-            print('enemy bfs:\n')
             can_reach_enemy = bfs(enemy_state)
 
 

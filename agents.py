@@ -33,7 +33,7 @@ def heuristic_eval(state):
             if position // state.N == 0:  # reached goal (farthest row)
                 return depth
             else:  # search child nodes (adjacent positions)
-                new_positions = state.legal_actions_pos(position)
+                new_positions = state.legal_actions_pawn(position)
                 for new_position in new_positions:
                     if new_position not in visited:
                         visited.add(new_position)
