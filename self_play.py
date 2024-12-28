@@ -67,6 +67,7 @@ def play(model, device):
     return history
 
 
+# @speedtest
 def self_play():
     """Perform self-play games and save the training data."""
     # Training data

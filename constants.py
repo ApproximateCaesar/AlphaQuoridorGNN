@@ -9,7 +9,7 @@ NUM_PLIES_FOR_DRAW: the number of plies (moves by either player) after which the
 # NUM_WALLS = 1
 # NUM_PLIES_FOR_DRAW = 14  # (1 wall placement + max 6 moves from goal)*2
 
-# 5x5 Quoridor:
+# # 5x5 Quoridor:
 # BOARD_SIZE = 5
 # NUM_WALLS = 2
 # NUM_PLIES_FOR_DRAW = 28  # (2 wall placements + max 12 moves from goal)*2

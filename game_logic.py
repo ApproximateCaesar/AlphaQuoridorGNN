@@ -411,31 +411,114 @@ class State:
                     if walls[pos - (N - 1)] == 2 or walls[pos + (N - 1)] == 2:
                         return False
             return True
-        # TODO: potential speedup by not calling can_reach_goal if wall isn't touching any other wall.
+        # TODO: potential speedup by not calling can_reach_goal if wall isn't touching two other walls (or wall and edge).
         def can_reach_goal(orientation, pos):
+
+            def is_goal_possibly_blocked(orientation, pos):
+                # TODO: simplify function by reusing code for either orientation.
+                """
+                Checks whether a wall placement could possibly block a player from reaching their goal.
+                This occurs if the wall to be placed is touched by at least two other walls (or board edges) at distinct points.
+                Note: a wall may be touched by other walls at three distinct points (the middle and either end):  ._._.
+                Multiple walls touching the same point are only counted as a single adjacency for the purpose of this function.
+
+                Parameters:
+                - orientation: int, 1 for horizontal wall, 2 for vertical wall.
+                - pos: int, linear index of the wall to be placed.
+
+                Returns:
+                - bool: True if the wall could contribute to blocking a goal, False otherwise.
+                """
+                N = self.N
+                walls = self.walls
+
+                x, y = pos//(N-1), pos%(N-1)  # row, col coords of wall to be placed
+                touching_count = 0  # number of walls or board edges touching the wall to be placed
+
+                if orientation == 1:  # horizontal wall
+                    # check walls/board edges touching left end:
+                    touching_left = False
+                    if y == 0:  # touching left board edge
+                        touching_left = True
+                    elif y > 0 and (walls[pos - 1] == 2 or  # check three vertical walls
+                                    (x > 0 and walls[pos - (N-1) - 1] == 2) or
+                                    (x < N-2 and walls[pos + N-1 - 1] == 2)):
+                        touching_left = True
+                    elif y > 1 and walls[pos - 2] == 1:  # check one horizontal wall
+                        touching_left = True
+
+                    # check walls touching middle:
+                    touching_middle = False
+                    if (x > 0 and walls[pos - (N-1)] == 2) or (x < N-2 and walls[pos + N-1] == 2):
+                        touching_middle = True
+
+                    # check walls/board edges touching right end:
+                    touching_right = False
+                    if y == N-2:  # touching right board edge
+                        touching_right = True
+                    elif y < N-2 and (walls[pos + 1] == 2 or  # check three vertical walls
+                                      (x > 0 and walls[pos - (N-1) + 1] == 2) or
+                                      (x < N-2 and walls[pos + N-1 + 1] == 2)):
+                        touching_right = True
+                    elif y < N-3 and walls[pos + 2] == 1:  # check one horizontal wall
+                        touching_right = True
+                    touching_count += (touching_left + touching_middle + touching_right)
+
+
+                elif orientation == 2:  # vertical wall
+                    # check walls/board edges touching top end:
+                    touching_top = False
+                    if x == 0:  # touching top board edge
+                        touching_top = True
+                    elif x > 0 and (walls[pos - (N-1)] == 1 or  # check three horizontal walls
+                                    (y > 0 and walls[pos - (N-1) - 1] == 1) or
+                                     (y < N-2 and walls[pos - (N-1) + 1] == 1)):
+                        touching_top = True
+                    elif x > 1 and walls[pos - 2*(N-1)] == 2:  # check one vertical wall
+                        touching_top = True
+
+                    # check walls/board edges touching middle:
+                    touching_middle = False
+                    if (y > 0 and walls[pos - 1] == 1) or (y < N-2 and walls[pos + 1] == 1):
+                        touching_middle = True
+
+                    # check walls/board edges touching bottom end:
+                    touching_bottom = False
+                    if x == N-2:  # touching bottom board edge
+                        touching_bottom = True
+                    elif x < N-2 and (walls[pos + N-1] == 1 or  # check three horizontal walls
+                                      (y > 0 and walls[pos + N-1 - 1] == 1) or
+                                      (y < N-2 and walls[pos + N-1 + 1] == 1)):
+                        touching_bottom = True
+                    elif x < N-3 and walls[pos + 2*(N-1)] == 2:  # check one vertical wall
+                        touching_bottom = True
+                    touching_count += (touching_top + touching_middle + touching_bottom)
+
+                return touching_count >= 2
+
             def bfs(state):
                 visited = set()
 
                 visited.add(state.player[0])  # mark root node as visited
                 queue = deque([state.player[0]])
                 while queue:
-                    # print(queue)
-                    # print(visited)
                     position = queue.popleft()
-
-                    # print(f'pop {position} == {(position//N, position%N)}')
                     if position // N == 0:  # reached goal (farthest row)
                         return True
                     else:  # search child nodes (adjacent positions)
                         new_positions = state.legal_actions_pos(position)
-                        # print([(position//N, position%N) for position in new_positions])
                         for new_position in new_positions:
                             if new_position not in visited:
                                 visited.add(new_position)
                                 queue.append(new_position)
                 return False
-            # TODO: potential speedup by modifying then searching self (and reverting afterwards) instead of cloning.
+
+            # don't bother with bfs if the wall couldn't possibly block the goal
+            if not is_goal_possibly_blocked(orientation, pos):
+                return True
+
             # Check if player can still reach goal
+            # TODO: potential speedup by modifying then searching self (and reverting afterwards) instead of cloning.
             player_state = State(board_size=N, player=self.player.copy(), enemy=self.enemy.copy(),
                                  walls=self.walls.copy(), plies_played=self.plies_played)
             player_state.walls[pos] = orientation
