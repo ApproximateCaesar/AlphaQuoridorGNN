@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pickle
 from pv_network_cnn import Network, INPUT_SHAPE, POLICY_OUTPUT_SIZE, NUM_FILTERS, NUM_RESIDUAL_BLOCKS, BOARD_SIZE
-
+from code_profiling_util import profile_this_function
 
 NUM_EPOCH = 100
 BATCH_SIZE = 128
@@ -21,54 +21,34 @@ def load_data():
         return pickle.load(f)
 
 
-# TODO: simplify this function. maybe directly produce 2d arrays from raw input. Replace all references of pieces_array. Finally make this method a cnn class method.
+# TODO: make this method a cnn class method
 def preprocess_input(game_state_arrays):
     """Processes raw input given as a list of game state arrays, where each game state is of the form
-     [player, enemy, walls], i.e. the output of State.to_array(). Input is converted to the form accepted
-     by the neural network.
-     :returns input: transformed input to be accepted by the neural network."""
+    [player, enemy, walls], i.e. the output of State.to_array(). Input is converted to the form accepted
+    by the neural network.
+    :returns processed_input: transformed input to be accepted by the neural network."""
     N = BOARD_SIZE
+    num_states = len(game_state_arrays)
+    processed_input = np.zeros((num_states, *INPUT_SHAPE), dtype=np.float32)
 
-    def pawn_table(player):
-        tables = []
+    for i, (player, enemy, walls) in enumerate(game_state_arrays):
+        processed_input[i, 0, player[0] // N, player[0] % N] = 1  # Player pawn table
+        processed_input[i, 1, :, :] = player[1]  # Player remaining walls table
 
-        table = [0] * (N ** 2)
-        table[player[0]] = 1
-        tables.append(table)
+        processed_input[i, 2, enemy[0] // N, enemy[0] % N] = 1  # Enemy pawn table
+        processed_input[i, 3, :, :] = enemy[1]  # Enemy remaining walls table
 
-        table = [player[1]] * (N ** 2)
-        tables.append(table)
-
-        return tables
-
-    def wall_table(walls):
-        tables = []
-
-        table_h = [0] * (N ** 2)
-        table_v = [0] * (N ** 2)
-
-        for wall_index in range((N - 1) ** 2):
-            # get linear index of top-left tile within the 2x2 square in which the wall is placed
-            top_left_tile_index = N * (wall_index // (N - 1)) + (wall_index % (N - 1))
-
-            if walls[wall_index] == 1:
-                table_h[top_left_tile_index] = 1
-            elif walls[wall_index] == 2:
-                table_v[top_left_tile_index] = 1
-
-        tables.append(table_h)
-        tables.append(table_v)
-
-        return tables
-
-    processed_input = [[pawn_table(state[0]), pawn_table(state[1]), wall_table(state[2])] for state in game_state_arrays]
-    C, H, W = INPUT_SHAPE
-    processed_input = np.array(processed_input).reshape(len(processed_input), C, H, W)  # Shape: (N, C, H, W)
-    # print(processed_input)
+        # Wall tables
+        for wall_index, wall in enumerate(walls):
+            if wall != 0:
+                top_left_tile_index = N * (wall_index // (N - 1)) + (wall_index % (N - 1))
+                row, col = divmod(top_left_tile_index, N)
+                if wall == 1:  # Horizontal wall
+                    processed_input[i, 4, row, col] = 1
+                elif wall == 2:  # Vertical wall
+                    processed_input[i, 5, row, col] = 1
 
     return processed_input
-
-
 
 
 def train_network():

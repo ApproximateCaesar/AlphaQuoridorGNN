@@ -9,6 +9,7 @@ class BaseNetwork(nn.Module, ABC):
     def __init__(self):
         super(BaseNetwork, self).__init__()
 
+
     def train_model(self, data_loader, optimizer, loss_fn, device='cpu', num_epochs=10):
         """Common training logic."""
         self.to(device)
@@ -30,7 +31,11 @@ class BaseNetwork(nn.Module, ABC):
 
             print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {total_loss:.4f}")
 
+
     @abstractmethod
-    def preprocess_data(self, batch):
-        """Preprocess the data before training (to be implemented by subclasses)."""
+    def preprocess_input(self, game_state_arrays):
+        """Processes raw input given as a list of game state arrays, where each game state is of the form
+            [player, enemy, walls], i.e. the output of State.to_array(). Input is converted to the form accepted
+            by the neural network.
+            :returns processed_input: transformed input to be accepted by the neural network."""
         pass

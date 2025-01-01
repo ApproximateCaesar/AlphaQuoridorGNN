@@ -6,7 +6,6 @@ import time
 import cProfile
 import pstats
 import snakeviz.cli as cli
-from io import StringIO
 
 
 def time_this_function(func):
@@ -20,25 +19,10 @@ def time_this_function(func):
     return wrapper
 
 
-def profile_this_function(func, limit=50):
-    def wrapper(*args, **kwargs):
-        profiler = cProfile.Profile()
-        profiler.enable()
-        result = func(*args, **kwargs)
-        profiler.disable()
-
-        # Output profiling results
-        s = StringIO()
-        ps = pstats.Stats(profiler, stream=s).sort_stats('cumulative')
-        ps.print_stats(limit)  # Limit the output to the first `limit` lines
-        print(s.getvalue())
-        return result
-    return wrapper
-
-def speedtest(func):
+def profile_this_function(func):
     def wrapper(*args, **kwargs):
         with cProfile.Profile() as pr:
-            result = func()
+            result = func(*args, **kwargs)
         stats = pstats.Stats(pr)
         stats.sort_stats(pstats.SortKey.TIME)
         filename = "speedtest_profile.prof"

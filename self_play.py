@@ -9,7 +9,7 @@ from copy import deepcopy
 import torch
 import numpy as np
 
-from code_profiling_util import time_this_function, speedtest
+from code_profiling_util import time_this_function, profile_this_function
 from game_logic import State
 from pv_mcts import pv_mcts_policy
 from pv_network_cnn import Network, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE, NUM_RESIDUAL_BLOCKS
@@ -67,7 +67,7 @@ def play(model, device):
     return history
 
 
-# @speedtest
+@profile_this_function
 def self_play():
     """Perform self-play games and save the training data."""
     # Training data

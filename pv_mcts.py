@@ -11,16 +11,17 @@ from copy import deepcopy
 import random
 from pathlib import Path
 
+from train_network import preprocess_input
+from code_profiling_util import profile_this_function
+
 # Prepare parameters
 PV_EVALUATE_COUNT = 50  # Number of simulations per inference (original is 1600)
 
 # Inference
 def predict(model, state, device):
     # Reshape input data for inference
-    C, H, W = INPUT_SHAPE
-    x = np.array(state.pieces_array())
-    x = x.reshape(C, H, W)  # Shape: (C, H, W)
-    x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)  # Add batch dimension and move to device
+    x = preprocess_input([state.to_array()])
+    x = torch.tensor(x, dtype=torch.float32).to(device)
 
     with torch.inference_mode():  # disable gradient calculation to provide inference speedup
         # with torch.autocast(device_type=device):  # using mixed precision showed a slight slowdown

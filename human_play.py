@@ -37,7 +37,7 @@ class GameUI(tk.Frame):
         self.placing_wall = False  # Flag to indicate if we are placing a wall
 
         # Creating the function for action selection using PV MCTS
-        self.next_action = alpha_beta_action#pv_mcts_action(model, device=device) if model else random_action()
+        self.next_action = pv_mcts_action(model, device=device) if model else random_action()
 
         # Main frame layout
         self.grid()
