@@ -5,7 +5,7 @@
 import torch
 import numpy as np
 from game_logic import State
-from pv_network_cnn import Network, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE, NUM_RESIDUAL_BLOCKS
+from pv_network_cnn import CNNNetwork, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE, NUM_RESIDUAL_BLOCKS
 from math import sqrt
 from copy import deepcopy
 import random
@@ -135,7 +135,7 @@ if __name__ == '__main__':
     # Load model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_path = sorted(Path('model').glob('*.pth'))[-1]
-    model = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
+    model = CNNNetwork(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     model.eval()

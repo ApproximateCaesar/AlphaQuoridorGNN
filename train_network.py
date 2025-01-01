@@ -6,7 +6,9 @@ from torch.utils.data import DataLoader, TensorDataset
 from pathlib import Path
 import numpy as np
 import pickle
-from pv_network_cnn import Network, INPUT_SHAPE, POLICY_OUTPUT_SIZE, NUM_FILTERS, NUM_RESIDUAL_BLOCKS, BOARD_SIZE
+
+from constants import PV_NETWORK_PATH
+from pv_network_cnn import CNNNetwork, INPUT_SHAPE, BOARD_SIZE
 from code_profiling_util import profile_this_function
 
 NUM_EPOCH = 100
@@ -57,8 +59,6 @@ def train_network():
     s, p, v = zip(*history)
 
     # Reshape the input data for training
-    # C, H, W = INPUT_SHAPE
-    # s = np.array(s).reshape(len(s), C, H, W)  # Shape: (N, C, H, W)
     s = preprocess_input(s)
     p = np.array(p)  # Policy targets
     v = np.array(v)  # Value targets
@@ -74,11 +74,8 @@ def train_network():
     data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     # Load the model
-    model = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
-
-    model_path = 'model/best.pth'
-    if os.path.exists(model_path):
-        model.load_state_dict(torch.load(model_path))
+    model = CNNNetwork()
+    model.load_state_dict(torch.load(PV_NETWORK_PATH + 'best.pth'))
     model = model.to(DEVICE)
 
     # Define the loss functions and optimizer
@@ -135,8 +132,7 @@ def train_network():
     print('')
 
     # Save the latest model
-    latest_model_path = 'model/latest.pth'
-    torch.save(model.state_dict(), latest_model_path)
+    torch.save(model.state_dict(), PV_NETWORK_PATH + 'latest.pth')
 
 
 if __name__ == '__main__':

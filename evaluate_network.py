@@ -6,9 +6,9 @@
 from game_logic import State
 from pv_mcts import pv_mcts_action
 import torch
-from pv_network_cnn import Network, INPUT_SHAPE, POLICY_OUTPUT_SIZE, NUM_FILTERS, NUM_RESIDUAL_BLOCKS
+from pv_network_cnn import CNNNetwork
 from shutil import copy
-import numpy as np
+from constants import PV_NETWORK_PATH
 
 # Prepare parameters
 EN_GAME_COUNT = 15 # Number of games per evaluation (originally 400)
@@ -52,14 +52,14 @@ def evaluate_network():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # load latest model
-    model0 = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
-    model0.load_state_dict(torch.load('model/latest.pth', map_location=device))
+    model0 = CNNNetwork()
+    model0.load_state_dict(torch.load(PV_NETWORK_PATH + 'latest.pth', map_location=device))
     model0.to(device)
     model0.eval()
 
     # load best model
-    model1 = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
-    model1.load_state_dict(torch.load('model/best.pth', map_location=device))
+    model1 = CNNNetwork()
+    model1.load_state_dict(torch.load(PV_NETWORK_PATH + 'best.pth', map_location=device))
     model1.to(device)
     model1.eval()
 

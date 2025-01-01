@@ -7,9 +7,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchsummary import summary
+from BaseNetwork import BaseNetwork
 
 # Parameters
-from constants import BOARD_SIZE
+from constants import BOARD_SIZE, PV_NETWORK_PATH
 NUM_FILTERS = 128  # Number of kernels/filters in the convolutional layer (256 in AlphaZero)
 NUM_RESIDUAL_BLOCKS = 16  # Number of residual blocks (19 in AlphaZero)
 INPUT_SHAPE = (6, BOARD_SIZE, BOARD_SIZE)  # Input shape: (Channels, Height, Width) for PyTorch Conv2d
@@ -45,25 +46,33 @@ class ResidualBlock(nn.Module):
 
 
 # Network model
-class Network(nn.Module):
-    def __init__(self, num_channels, num_filters, num_residual_blocks, policy_output_size):
-        super(Network, self).__init__()
-        self.conv = ConvBN(num_channels,num_filters)
+class CNNNetwork(BaseNetwork):
+
+    @property
+    def name(self):
+        return self._name
+
+    def __init__(self):
+        super(CNNNetwork, self).__init__()
+        self._name = 'CNN'
+
+        # NN layers
+        self.conv = ConvBN(INPUT_SHAPE[0], NUM_FILTERS)
         self.residual_blocks = nn.Sequential(
-            *[ResidualBlock(num_filters) for _ in range(num_residual_blocks)]
+            *[ResidualBlock(NUM_FILTERS) for _ in range(NUM_RESIDUAL_BLOCKS)]
         )
 
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
 
         self.policy_head = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(num_filters, policy_output_size),
+            nn.Linear(NUM_FILTERS, POLICY_OUTPUT_SIZE),
             nn.Softmax(dim=1)
         )
 
         self.value_head = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(num_filters, 1),
+            nn.Linear(NUM_FILTERS, 1),
             nn.Tanh()
         )
 
@@ -75,21 +84,26 @@ class Network(nn.Module):
         value = self.value_head(x)
         return policy, value
 
+    def preprocess_input(self, game_state_arrays):
+        pass
+
+    def train_model(self, data_loader, optimizer, loss_fn, device='cpu', num_epochs=10):
+        pass
+
 
 # Function to create the policy-value network
 def create_network():
-    model_path = 'model/best.pth'
 
     # Do nothing if the model is already created
-    if os.path.exists(model_path):
+    if os.path.exists(PV_NETWORK_PATH + 'best.pth'):
         return
 
     # Initialize the model
-    model = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
+    model = CNNNetwork()
 
     # Save the model
-    os.makedirs('model/', exist_ok=True)
-    torch.save(model.state_dict(), model_path)
+    os.makedirs(PV_NETWORK_PATH, exist_ok=True)
+    torch.save(model.state_dict(), PV_NETWORK_PATH + 'best.pth')
 
 
 # Running the function

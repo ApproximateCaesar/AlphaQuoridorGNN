@@ -7,7 +7,7 @@ from game_logic import State
 from agents import random_action, alpha_beta_action, mcts_action
 from pv_mcts import pv_mcts_action
 import torch
-from pv_network_cnn import Network, INPUT_SHAPE, POLICY_OUTPUT_SIZE, NUM_FILTERS, NUM_RESIDUAL_BLOCKS
+from pv_network_cnn import CNNNetwork, INPUT_SHAPE, POLICY_OUTPUT_SIZE, NUM_FILTERS, NUM_RESIDUAL_BLOCKS
 from pathlib import Path
 import numpy as np
 
@@ -63,7 +63,7 @@ def evaluate_best_player():
     # Load best model
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model_path = 'model/best.pth'
-    model = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
+    model = CNNNetwork(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model = torch.jit.script(model)  # converting model to torchscript increases performance
     model.to(device)

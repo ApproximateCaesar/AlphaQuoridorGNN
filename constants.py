@@ -18,3 +18,6 @@ NUM_PLIES_FOR_DRAW = 28  # (2 wall placements + max 12 moves from goal)*2
 # BOARD_SIZE = 9
 # NUM_WALLS = 10
 # NUM_PLIES_FOR_DRAW = 116  # (10 wall placements + max 48 moves from goal)*2
+
+PV_NETWORK_NAME = 'CNN'  # which network to use
+PV_NETWORK_PATH = f'models/{PV_NETWORK_NAME}/{BOARD_SIZE}x{BOARD_SIZE}/'  # path for network weights

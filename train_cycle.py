@@ -16,16 +16,15 @@ from self_play import self_play
 from train_network import train_network
 from evaluate_network import evaluate_network
 from evaluate_agents import evaluate_best_player
-from constants import BOARD_SIZE
+from constants import BOARD_SIZE, PV_NETWORK_NAME
 
-# Number of NUM_EPOCH
-NUM_TRAIN_CYCLE = 100
+NUM_TRAIN_CYCLE = 100 # Number of training cycles
 
 # Main function
 if __name__ == '__main__':
-    print(f'Board size {BOARD_SIZE}')
+    print(f'Model {PV_NETWORK_NAME} on board size {BOARD_SIZE}')
 
-    # Creating the dual network
+    # Creating the PV network
     create_network()
 
     for i in range(NUM_TRAIN_CYCLE):

@@ -9,27 +9,16 @@ class BaseNetwork(nn.Module, ABC):
     def __init__(self):
         super(BaseNetwork, self).__init__()
 
+    @property
+    @abstractmethod
+    def name(self):
+        """Name of the network architecture to be used in file extensions."""
+        pass
 
+    @abstractmethod
     def train_model(self, data_loader, optimizer, loss_fn, device='cpu', num_epochs=10):
-        """Common training logic."""
-        self.to(device)
-        self.train()
-
-        for epoch in range(num_epochs):
-            total_loss = 0
-            for batch in data_loader:
-                inputs, labels = self.preprocess_data(batch)  # Architecture-specific preprocessing
-                inputs, labels = [x.to(device) for x in inputs], labels.to(device)
-
-                optimizer.zero_grad()
-                outputs = self.forward(*inputs)  # Call the forward method with preprocessed inputs
-                loss = loss_fn(outputs, labels)
-                loss.backward()
-                optimizer.step()
-
-                total_loss += loss.item()
-
-            print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {total_loss:.4f}")
+        """Performs model training."""
+        pass
 
 
     @abstractmethod
@@ -39,3 +28,4 @@ class BaseNetwork(nn.Module, ABC):
             by the neural network.
             :returns processed_input: transformed input to be accepted by the neural network."""
         pass
+

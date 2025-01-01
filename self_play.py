@@ -10,10 +10,10 @@ import torch
 import numpy as np
 
 from code_profiling_util import time_this_function, profile_this_function
+from constants import PV_NETWORK_PATH
 from game_logic import State
 from pv_mcts import pv_mcts_policy
-from pv_network_cnn import Network, INPUT_SHAPE, NUM_FILTERS, POLICY_OUTPUT_SIZE, NUM_RESIDUAL_BLOCKS
-# TODO: hardcode model constants into DualNetwork so I don't always have to import them
+from pv_network_cnn import CNNNetwork, POLICY_OUTPUT_SIZE
 
 # Parameters
 SP_GAME_COUNT = 50  # Number of games for self-play (25000 in the original version)
@@ -26,6 +26,7 @@ def first_player_value(ended_state):
         return -1 if ended_state.is_first_player() else 1
     return 0
 
+# TODO: make each model type have its own history folder.
 def write_data(history):
     """Save training data to a file."""
     now = datetime.now()
@@ -67,7 +68,6 @@ def play(model, device):
     return history
 
 
-@profile_this_function
 def self_play():
     """Perform self-play games and save the training data."""
     # Training data
@@ -75,9 +75,8 @@ def self_play():
     # TODO: create a load model function
     # Load model
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    model_path = 'model/best.pth'
-    model = Network(INPUT_SHAPE[0], NUM_FILTERS, NUM_RESIDUAL_BLOCKS, POLICY_OUTPUT_SIZE)
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model = CNNNetwork()
+    model.load_state_dict(torch.load(PV_NETWORK_PATH + 'best.pth', map_location=device))
     model = torch.jit.script(model)  # converting model to torchscript increases performance
     model.to(device)
     model.eval()
