@@ -44,7 +44,7 @@ def play(next_actions):
 
 # Replace the best player
 def update_best_player():
-    copy('model/latest.pth', 'model/best.pth')
+    copy(PV_NETWORK_PATH + 'latest.pth', PV_NETWORK_PATH + 'best.pth')
     print('Latest model is better than current best. Replacing best model with latest.')
 
 # Network evaluation
