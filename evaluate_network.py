@@ -53,15 +53,11 @@ def evaluate_network():
 
     # load latest model
     model0 = CNNNetwork()
-    model0.load_state_dict(torch.load(PV_NETWORK_PATH + 'latest.pth', map_location=device))
-    model0.to(device)
-    model0.eval()
+    model0.prep_for_inference(PV_NETWORK_PATH + 'latest.pth')
 
     # load best model
     model1 = CNNNetwork()
-    model1.load_state_dict(torch.load(PV_NETWORK_PATH + 'best.pth', map_location=device))
-    model1.to(device)
-    model1.eval()
+    model1.prep_for_inference(PV_NETWORK_PATH + 'best.pth')
 
     # Generate a function to select actions using PV MCTS
     next_action0 = pv_mcts_action(model0, EN_TEMPERATURE, device)

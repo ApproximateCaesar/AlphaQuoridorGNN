@@ -11,33 +11,11 @@ from math import sqrt
 from copy import deepcopy
 import random
 from pathlib import Path
-
 from train_network import preprocess_input
 from code_profiling_util import profile_this_function
 
 # Prepare parameters
 PV_EVALUATE_COUNT = 50  # Number of simulations per inference (original is 1600)
-
-# Inference
-def predict(model, state, device):
-    # Reshape input data for inference
-    x = preprocess_input([state.to_array()])
-    x = torch.tensor(x, dtype=torch.float32).to(device)
-
-    with torch.inference_mode():  # disable gradient calculation to provide inference speedup
-        # with torch.autocast(device_type=device):  # using mixed precision showed a slight slowdown
-        policy, value = model(x)
-
-    policy = policy[0][list(state.legal_actions())]  # Remove batch dimension and restrict to legal actions
-
-    # Normalize policy distribution over the subset of legal actions
-    policy /= torch.sum(policy) if torch.sum(policy) else 1
-
-    policy = policy.cpu().numpy()  # tensor on GPU to numpy array on CPU
-    value = value.item()  # GPU tensor to float
-
-    return policy, value
-
 
 def pv_mcts_policy(model, state, temperature, device):
     """Use PUCT-based Monte Carlo Tree Search to return an improved policy (distribution over legal actions),
@@ -66,7 +44,7 @@ def pv_mcts_policy(model, state, temperature, device):
             # If there are no child nodes
             elif not self.child_nodes:
                 # Get policy and value from neural network inference
-                prior_policy, value = predict(model, self.state, device)
+                prior_policy, value = model.predict(self.state, device)
                 # Update cumulative value and number of simulations
                 self.w += value
                 self.n += 1
@@ -137,9 +115,7 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_path = PV_NETWORK_PATH + 'best.pth'
     model = CNNNetwork()
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.to(device)
-    model.eval()
+    model.prep_for_inference(model_path)
 
     # Play game using PV-MCTS
     state = State()

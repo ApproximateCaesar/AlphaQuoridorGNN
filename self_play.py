@@ -67,19 +67,16 @@ def play(model, device):
 
     return history
 
-
+@profile_this_function
 def self_play():
     """Perform self-play games and save the training data."""
     # Training data
     history = []
-    # TODO: create a load model function
+
     # Load model
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = CNNNetwork()
-    model.load_state_dict(torch.load(PV_NETWORK_PATH + 'best.pth', map_location=device))
-    model = torch.jit.script(model)  # converting model to torchscript increases performance
-    model.to(device)
-    model.eval()
+    model.prep_for_inference(model_path=PV_NETWORK_PATH + 'best.pth')
 
     for i in range(SP_GAME_COUNT):
         # Execute one game

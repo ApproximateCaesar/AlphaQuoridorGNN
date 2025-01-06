@@ -17,8 +17,12 @@ from train_network import train_network
 from evaluate_network import evaluate_network
 from evaluate_agents import evaluate_best_player
 from constants import BOARD_SIZE, PV_NETWORK_NAME
+import torch
 
 NUM_TRAIN_CYCLE = 1000 # Number of training cycles
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+torch.set_default_device(device)
 
 # Main function
 if __name__ == '__main__':
