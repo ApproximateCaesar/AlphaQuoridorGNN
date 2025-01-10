@@ -1,3 +1,5 @@
+from zmq.backend import first
+
 from constants import BOARD_SIZE
 import torch
 import torch_tensorrt
@@ -22,12 +24,13 @@ class BaseNetwork(nn.Module, ABC):
         self.load_state_dict(torch.load(model_path, map_location=device))
         self.eval()  # set to evaluation mode
         # self.optimised_model = torch.jit.script(self)  # slower optimisation but less dependencies
+        self.to(device)
         self.optimised_model = torch_tensorrt.compile(
             self,
             inputs=[torch_tensorrt.Input((1, *(6, BOARD_SIZE, BOARD_SIZE)))],  # Specify the input shape
             enabled_precisions={torch.float32},  # Use FP32 precision
         )
-        self.optimised_model.to(device)
+
 
     @abstractmethod
     def predict(self, state, device):

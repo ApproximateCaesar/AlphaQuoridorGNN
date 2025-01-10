@@ -23,43 +23,18 @@ def load_data():
         return pickle.load(f)
 
 
-# TODO: make this method a cnn class method
-def preprocess_input(game_state_arrays):
-    """Processes raw input given as a list of game state arrays, where each game state is of the form
-    [player, enemy, walls], i.e. the output of State.to_array(). Input is converted to the form accepted
-    by the neural network.
-    :returns processed_input: transformed input to be accepted by the neural network."""
-    N = BOARD_SIZE
-    num_states = len(game_state_arrays)
-    processed_input = np.zeros((num_states, *INPUT_SHAPE), dtype=np.float32)
-
-    for i, (player, enemy, walls) in enumerate(game_state_arrays):
-        processed_input[i, 0, player[0] // N, player[0] % N] = 1  # Player pawn table
-        processed_input[i, 1, :, :] = player[1]  # Player remaining walls table
-
-        processed_input[i, 2, enemy[0] // N, enemy[0] % N] = 1  # Enemy pawn table
-        processed_input[i, 3, :, :] = enemy[1]  # Enemy remaining walls table
-
-        # Wall tables
-        for wall_index, wall in enumerate(walls):
-            if wall != 0:
-                top_left_tile_index = N * (wall_index // (N - 1)) + (wall_index % (N - 1))
-                row, col = divmod(top_left_tile_index, N)
-                if wall == 1:  # Horizontal wall
-                    processed_input[i, 4, row, col] = 1
-                elif wall == 2:  # Vertical wall
-                    processed_input[i, 5, row, col] = 1
-
-    return processed_input
-
-
 def train_network():
+    # Load the model
+    model = CNNNetwork()
+    model.load_state_dict(torch.load(PV_NETWORK_PATH + 'best.pth'))
+    model = model.to(DEVICE)
+
     # Load the training data
     history = load_data()
     s, p, v = zip(*history)
 
     # Reshape the input data for training
-    s = preprocess_input(s)
+    s = model.preprocess_input(s)
     p = np.array(p)  # Policy targets
     v = np.array(v)  # Value targets
 
@@ -73,10 +48,7 @@ def train_network():
 
     data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-    # Load the model
-    model = CNNNetwork()
-    model.load_state_dict(torch.load(PV_NETWORK_PATH + 'best.pth'))
-    model = model.to(DEVICE)
+
 
     # Define the loss functions and optimizer
     policy_loss_fn = nn.CrossEntropyLoss()

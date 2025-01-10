@@ -67,7 +67,7 @@ def play(model, device):
 
     return history
 
-@profile_this_function
+
 def self_play():
     """Perform self-play games and save the training data."""
     # Training data

@@ -1,9 +1,5 @@
 # TODO: Performance increases: https://pytorch.org/serve/performance_checklist.html
 # TODO: Create a system which saves the data and models separately for each board size.
-# TODO: can probably just use
-#  device = 'cuda' if torch.cuda.is_available() else 'cpu'
-#  torch.set_default_device(device)
-#  at the start of this file instead of checking and passing 'device' between functions.
 
 #  TODO: track model performance over training cycles and the number of self-play games performed.
 # ====================
@@ -20,9 +16,6 @@ from constants import BOARD_SIZE, PV_NETWORK_NAME
 import torch
 
 NUM_TRAIN_CYCLE = 1000 # Number of training cycles
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-torch.set_default_device(device)
 
 # Main function
 if __name__ == '__main__':
